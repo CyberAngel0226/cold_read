@@ -69,46 +69,65 @@ def build_market_structure_llm_request(
     }
 
 
+DEFAULT_MIN_LIQUIDITY = 1000
+DEFAULT_MIN_VOLUME = 1000
+
+
 def generate_market_structure_draft(
     evidence_snapshot: dict[str, Any],
+    min_liquidity: float = DEFAULT_MIN_LIQUIDITY,
+    min_volume: float = DEFAULT_MIN_VOLUME,
 ) -> dict[str, Any]:
     markets = evidence_snapshot["marketEvidence"]["screenedMarkets"]
-    market = markets[0]
 
-    if _market_structure_is_too_weak(market):
-        return {
-            "action": "HOLD",
-            "rationale": (
-                "Market structure does not support a small position: liquidity "
-                f"{market['liquidity']} and volume {market['volume']} are too thin "
-                "for the Market Structure Lens."
-            ),
-            "confidence": "LOW",
-            "riskLevel": "HIGH",
-            "evidenceRefs": [market["id"]],
-        }
+    for market in markets:
+        if not _market_structure_is_too_weak(market, min_liquidity, min_volume):
+            signal = market["oneSidedSignal"]
+            action = "BUY_YES_SMALL" if signal["side"] == "YES" else "BUY_NO_SMALL"
+            side_price = (
+                market["prices"]["yes"]
+                if signal["side"] == "YES"
+                else market["prices"]["no"]
+            )
+            side_label = signal["side"]
 
-    signal = market["oneSidedSignal"]
-    action = "BUY_YES_SMALL" if signal["side"] == "YES" else "BUY_NO_SMALL"
-    side_price = market["prices"]["yes"] if signal["side"] == "YES" else market["prices"]["no"]
-    side_label = signal["side"]
+            return {
+                "action": action,
+                "targetMarketId": market["id"],
+                "rationale": (
+                    f"Market structure favors a small {side_label} position: "
+                    f"{side_label} price {side_price} is one-sided, liquidity {market['liquidity']} "
+                    f"and volume {market['volume']} support a fixed small stake, and resolution rules are present."
+                ),
+                "confidence": "MEDIUM",
+                "riskLevel": "LOW",
+                "evidenceRefs": [market["id"]],
+            }
 
+    all_market_ids = [m["id"] for m in markets]
+    weak_reasons = "; ".join(
+        f"{m['id']} liquidity {m['liquidity']} volume {m['volume']}"
+        for m in markets
+    )
     return {
-        "action": action,
-        "targetMarketId": market["id"],
+        "action": "HOLD",
         "rationale": (
-            f"Market structure favors a small {side_label} position: "
-            f"{side_label} price {side_price} is one-sided, liquidity {market['liquidity']} "
-            f"and volume {market['volume']} support a fixed small stake, and resolution rules are present."
+            f"No ScreenedMarket passes structure thresholds "
+            f"(min_liquidity={min_liquidity}, min_volume={min_volume}): "
+            f"{weak_reasons}"
         ),
-        "confidence": "MEDIUM",
-        "riskLevel": "LOW",
-        "evidenceRefs": [market["id"]],
+        "confidence": "LOW",
+        "riskLevel": "HIGH",
+        "evidenceRefs": all_market_ids,
     }
 
 
-def _market_structure_is_too_weak(market: dict[str, Any]) -> bool:
-    return market["liquidity"] < 1000 or market["volume"] < 1000
+def _market_structure_is_too_weak(
+    market: dict[str, Any],
+    min_liquidity: float = DEFAULT_MIN_LIQUIDITY,
+    min_volume: float = DEFAULT_MIN_VOLUME,
+) -> bool:
+    return market["liquidity"] < min_liquidity or market["volume"] < min_volume
 
 
 def main() -> None:
@@ -119,13 +138,29 @@ def main() -> None:
         choices=["draft", "llm-request"],
         default="draft",
     )
+    parser.add_argument(
+        "--min-liquidity",
+        type=float,
+        default=DEFAULT_MIN_LIQUIDITY,
+        help=f"Minimum liquidity threshold (default: {DEFAULT_MIN_LIQUIDITY})",
+    )
+    parser.add_argument(
+        "--min-volume",
+        type=float,
+        default=DEFAULT_MIN_VOLUME,
+        help=f"Minimum volume threshold (default: {DEFAULT_MIN_VOLUME})",
+    )
     args = parser.parse_args()
 
     snapshot = load_evidence_snapshot(args.snapshot_file)
     if args.mode == "llm-request":
         output = build_market_structure_llm_request(snapshot)
     else:
-        output = generate_market_structure_draft(snapshot)
+        output = generate_market_structure_draft(
+            snapshot,
+            min_liquidity=args.min_liquidity,
+            min_volume=args.min_volume,
+        )
 
     print(json.dumps(output, ensure_ascii=False))
 

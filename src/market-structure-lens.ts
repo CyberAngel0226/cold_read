@@ -23,6 +23,8 @@ export type GenerateMarketStructureDraftWithPythonInput = {
   evidenceSnapshot: EvidenceSnapshot;
   pythonExecutable?: string;
   scriptPath?: string;
+  minLiquidity?: number;
+  minVolume?: number;
 };
 
 export type AdaptMarketStructureDraftInput = {
@@ -127,8 +129,16 @@ async function runPythonMarketStructureLens(
   const scriptPath =
     input.scriptPath ?? join(process.cwd(), "agents", "market_structure_lens.py");
 
+  const args = [scriptPath, "--snapshot-file", "-"];
+  if (input.minLiquidity !== undefined) {
+    args.push("--min-liquidity", String(input.minLiquidity));
+  }
+  if (input.minVolume !== undefined) {
+    args.push("--min-volume", String(input.minVolume));
+  }
+
   return await new Promise((resolve, reject) => {
-    const child = spawn(pythonExecutable, [scriptPath, "--snapshot-file", "-"], {
+    const child = spawn(pythonExecutable, args, {
       stdio: ["pipe", "pipe", "pipe"],
     });
     const stdout: Buffer[] = [];
