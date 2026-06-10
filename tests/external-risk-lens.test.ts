@@ -22,6 +22,7 @@ const evidenceSnapshot: EvidenceSnapshot = {
     screenedMarkets: [
       {
         id: "screened_candidate_poly_1",
+        sourceCandidateMarketId: "candidate_poly_1",
         polymarketId: "poly_1",
         question: "Will the Fed cut rates in July?",
         outcomes: ["YES", "NO"],
@@ -352,6 +353,48 @@ test("runs the Python External Risk Lens over a frozen Tavily-confirmed Evidence
   assert.deepEqual(draft, {
     action: "BUY_YES_SMALL",
     targetMarketId: "screened_candidate_poly_1",
+    rationale:
+      "External context does not undermine the one-sided YES signal: 1 context item(s) cite no major counterevidence, reversal risk, late-breaking event, or resolution dispute.",
+    confidence: "MEDIUM",
+    riskLevel: "LOW",
+    evidenceRefs: ["context_candidate_poly_1_1"],
+    externalRiskFlags: [],
+  });
+});
+
+test("runs the Python External Risk Lens using explicit Screened Market source identity", async () => {
+  const explicitSourceSnapshot: EvidenceSnapshot = {
+    ...evidenceSnapshot,
+    marketEvidence: {
+      screenedMarkets: [
+        {
+          ...evidenceSnapshot.marketEvidence.screenedMarkets[0],
+          id: "screened_market_1",
+          sourceCandidateMarketId: "candidate_poly_1",
+        },
+      ],
+    },
+    contextEvidence: {
+      items: [
+        {
+          id: "context_candidate_poly_1_1",
+          marketId: "candidate_poly_1",
+          sourceUrl: "https://example.com/fed-context",
+          title: "Fed rate context",
+          summary: "No major contrary evidence found.",
+          retrievedAt: "2026-06-10T00:03:00.000Z",
+        },
+      ],
+    },
+  };
+
+  const draft = await generateExternalRiskDraftWithPython({
+    evidenceSnapshot: explicitSourceSnapshot,
+  });
+
+  assert.deepEqual(draft, {
+    action: "BUY_YES_SMALL",
+    targetMarketId: "screened_market_1",
     rationale:
       "External context does not undermine the one-sided YES signal: 1 context item(s) cite no major counterevidence, reversal risk, late-breaking event, or resolution dispute.",
     confidence: "MEDIUM",
