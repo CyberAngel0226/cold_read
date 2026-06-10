@@ -27,7 +27,7 @@ If no market passes screening, ColdRead returns a `ScreeningOutcome` and does no
 - [CONTEXT.md](CONTEXT.md): canonical glossary and domain language.
 - [docs/prd.md](docs/prd.md): MVP product requirements.
 - [docs/mvp.md](docs/mvp.md): condensed MVP flow and boundaries.
-- [docs/issues.md](docs/issues.md): implementation issue plan.
+- [docs/issues.md](docs/issues.md): 14 implementation issues.
 - [docs/adr](docs/adr): architecture decisions.
 - [docs/github-workflow.md](docs/github-workflow.md): branch, commit, push, and PR rules for collaborators and Codex agents.
 - [src/domain.ts](src/domain.ts): shared TypeScript domain contracts.
@@ -77,3 +77,7 @@ See [docs/github-workflow.md](docs/github-workflow.md) for the full rules.
 - Testnet Audit Anchors store only minimal verifiable references such as hashes or CIDs.
 - User Approval confirms a proposed execution plan only.
 - Real Polymarket execution, caw/cawPact integration, and autonomous execution are deferred beyond MVP.
+
+---
+
+![直接commit到master分支](assets/direct-commit-master.jpg)
