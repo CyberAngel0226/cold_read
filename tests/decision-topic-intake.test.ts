@@ -8,11 +8,13 @@ import {
 
 test("user can submit a Decision Topic and see topic_received timeline state", () => {
   const intake = createDecisionTopicIntake({
+    id: "topic_fed_rates",
     text: "Will the Fed cut rates at the next meeting?",
     submittedBy: "user_1",
     now: "2026-06-10T00:00:00.000Z",
   });
 
+  assert.equal(intake.topic.id, "topic_fed_rates");
   assert.equal(intake.topic.text, "Will the Fed cut rates at the next meeting?");
   assert.equal(intake.topic.submittedBy, "user_1");
   assert.equal(intake.topic.receivedAt, "2026-06-10T00:00:00.000Z");
@@ -21,6 +23,7 @@ test("user can submit a Decision Topic and see topic_received timeline state", (
 
 test("no Screened Market returns Screening Outcome without creating Decision Run", () => {
   const intake = createDecisionTopicIntake({
+    id: "topic_no_matching_market",
     text: "Will an obviously unrelated event happen?",
     submittedBy: "user_1",
     now: "2026-06-10T00:00:00.000Z",
