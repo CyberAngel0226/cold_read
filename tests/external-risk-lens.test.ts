@@ -3,6 +3,8 @@ import test from "node:test";
 
 import {
   adaptExternalRiskDraft,
+  generateExternalRiskDraftWithPython,
+  generateExternalRiskRecommendationWithPython,
   type EvidenceSnapshot,
   type ExternalRiskRecommendationDraft,
 } from "../src/index.js";
@@ -255,4 +257,90 @@ test("rejects malformed Python External Risk drafts before they become domain re
       }),
     /Unsupported External Risk action\./,
   );
+});
+
+test("runs the Python External Risk Lens over an Evidence Snapshot and returns a draft", async () => {
+  const draft = await generateExternalRiskDraftWithPython({
+    evidenceSnapshot,
+  });
+
+  assert.deepEqual(draft, {
+    action: "BUY_YES_SMALL",
+    targetMarketId: "screened_candidate_poly_1",
+    rationale:
+      "External context does not undermine the one-sided YES signal: 1 context item(s) cite no major counterevidence, reversal risk, late-breaking event, or resolution dispute.",
+    confidence: "MEDIUM",
+    riskLevel: "LOW",
+    evidenceRefs: ["context_1"],
+    externalRiskFlags: [],
+  });
+});
+
+test("runs the Python External Risk Lens and returns HOLD when context is risky", async () => {
+  const riskyContextSnapshot: EvidenceSnapshot = {
+    ...evidenceSnapshot,
+    contextEvidence: {
+      items: [
+        {
+          id: "context_risky_1",
+          marketId: "screened_candidate_poly_1",
+          sourceUrl: "https://example.com/fed-risk",
+          title: "Fed reversal risk",
+          summary: "Late-breaking counterevidence could undermine the signal.",
+          retrievedAt: "2026-06-10T00:03:00.000Z",
+        },
+      ],
+    },
+  };
+
+  const draft = await generateExternalRiskDraftWithPython({
+    evidenceSnapshot: riskyContextSnapshot,
+  });
+
+  assert.equal(draft.action, "HOLD");
+  assert.equal("targetMarketId" in draft, false);
+  assert.equal(draft.confidence, "LOW");
+  assert.equal(draft.riskLevel, "HIGH");
+  assert.deepEqual(draft.evidenceRefs, ["context_risky_1"]);
+  assert.deepEqual(draft.externalRiskFlags, [
+    "MAJOR_COUNTEREVIDENCE",
+    "REVERSAL_RISK",
+    "LATE_BREAKING_EVENT",
+  ]);
+});
+
+test("runs the Python External Risk Lens and adapts its draft into a domain recommendation", async () => {
+  const recommendation = await generateExternalRiskRecommendationWithPython({
+    evidenceSnapshot,
+    now: "2026-06-10T00:05:00.000Z",
+    createRecommendationId: () => "rec_external_risk_python_1",
+    createWalletActionProposalId: () => "wallet_action_external_python_1",
+    smallStakeAmount: "5.00",
+  });
+
+  assert.deepEqual(recommendation, {
+    id: "rec_external_risk_python_1",
+    decisionRunId: "run_1",
+    evidenceSnapshotId: "snapshot_1",
+    analysisLens: "EXTERNAL_RISK",
+    action: "BUY_YES_SMALL",
+    targetMarketId: "screened_candidate_poly_1",
+    walletActionProposal: {
+      id: "wallet_action_external_python_1",
+      marketId: "screened_candidate_poly_1",
+      action: "BUY_YES_SMALL",
+      stake: {
+        amount: "5.00",
+        currency: "USDC",
+      },
+      rationale:
+        "External context does not undermine the one-sided YES signal: 1 context item(s) cite no major counterevidence, reversal risk, late-breaking event, or resolution dispute.",
+    },
+    rationale:
+      "External context does not undermine the one-sided YES signal: 1 context item(s) cite no major counterevidence, reversal risk, late-breaking event, or resolution dispute.",
+    confidence: "MEDIUM",
+    riskLevel: "LOW",
+    evidenceRefs: ["context_1"],
+    createdAt: "2026-06-10T00:05:00.000Z",
+  });
 });

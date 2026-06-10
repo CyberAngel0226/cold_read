@@ -1,0 +1,41 @@
+{
+  "id": "snapshot_external_1",
+  "decisionRunId": "run_1",
+  "createdAt": "2026-06-10T00:04:00.000Z",
+  "marketEvidence": {
+    "screenedMarkets": [
+      {
+        "id": "screened_candidate_poly_1",
+        "polymarketId": "poly_1",
+        "question": "Will the Fed cut rates in July?",
+        "outcomes": ["YES", "NO"],
+        "prices": {
+          "yes": 0.92,
+          "no": 0.08
+        },
+        "volume": 100000,
+        "liquidity": 25000,
+        "closeTime": "2026-07-10T00:00:00.000Z",
+        "resolutionRules": "Resolves YES if the Fed cuts rates in July.",
+        "oneSidedSignal": {
+          "side": "YES",
+          "price": 0.92,
+          "rationale": "YES price is strongly one-sided."
+        },
+        "confirmationRationale": "Tavily context found no major counterevidence."
+      }
+    ]
+  },
+  "contextEvidence": {
+    "items": [
+      {
+        "id": "context_clean_1",
+        "marketId": "screened_candidate_poly_1",
+        "sourceUrl": "https://example.com/fed-context",
+        "title": "Fed rate context",
+        "summary": "No major risk found in the context evidence.",
+        "retrievedAt": "2026-06-10T00:03:00.000Z"
+      }
+    ]
+  }
+}
