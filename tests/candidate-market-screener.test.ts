@@ -72,6 +72,34 @@ test("active Yes/No market with clear rules, liquidity, runway, and one-sided pr
   });
 });
 
+test("NO side exact threshold creates a symmetric One-Sided Signal", () => {
+  const result = screenCandidateMarkets({
+    topicId: "topic_fed_rates",
+    timeline: ["topic_received", "markets_fetched"],
+    markets: [
+      {
+        ...validMarket,
+        id: "poly_no_boundary",
+        prices: {
+          YES: 0.15,
+          NO: 0.85,
+        },
+      },
+    ],
+    now: "2026-06-10T00:02:00.000Z",
+    minimumLiquidity: 1000,
+    minimumHoursUntilClose: 24,
+    oneSidedPriceThreshold: 0.85,
+  });
+
+  assert.equal(result.rejectedMarkets.length, 0);
+  assert.deepEqual(result.candidateMarkets[0]?.oneSidedSignal, {
+    side: "NO",
+    price: 0.85,
+    rationale: "NO price 0.85 meets one-sided threshold 0.85.",
+  });
+});
+
 test("closed or paused markets are rejected before they become Candidate Markets", () => {
   const result = screenCandidateMarkets({
     topicId: "topic_fed_rates",

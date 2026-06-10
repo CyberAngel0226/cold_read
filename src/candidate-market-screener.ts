@@ -1,3 +1,5 @@
+import assert from "node:assert/strict";
+
 import type {
   CandidateMarket,
   CandidateMarketScreeningResult,
@@ -135,9 +137,7 @@ function toCandidateMarket(
     oneSidedPriceThreshold,
   );
 
-  if (oneSidedSignal === undefined) {
-    throw new Error("Candidate Market requires a One-Sided Signal.");
-  }
+  assert(oneSidedSignal !== undefined, "Candidate Market requires a One-Sided Signal.");
 
   return {
     id: `candidate_${market.id}`,
@@ -170,15 +170,15 @@ function createOneSidedSignal(
     };
   }
 
-  if (noPrice < oneSidedPriceThreshold) {
-    return undefined;
+  if (noPrice >= oneSidedPriceThreshold) {
+    return {
+      side: "NO",
+      price: noPrice,
+      rationale: `NO price ${noPrice.toFixed(2)} meets one-sided threshold ${oneSidedPriceThreshold.toFixed(2)}.`,
+    };
   }
 
-  return {
-    side: "NO",
-    price: noPrice,
-    rationale: `NO price ${noPrice.toFixed(2)} meets one-sided threshold ${oneSidedPriceThreshold.toFixed(2)}.`,
-  };
+  return undefined;
 }
 
 function rejectionReasonFor(
