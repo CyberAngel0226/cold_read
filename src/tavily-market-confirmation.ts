@@ -134,6 +134,7 @@ function toContextEvidenceItems(
 function toScreenedMarket(candidateMarket: CandidateMarket): ScreenedMarket {
   return {
     id: `screened_${candidateMarket.id}`,
+    sourceCandidateMarketId: candidateMarket.id,
     polymarketId: candidateMarket.sourceMarketId,
     question: candidateMarket.question,
     outcomes: candidateMarket.outcomes,

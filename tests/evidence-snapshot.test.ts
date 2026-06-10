@@ -19,6 +19,7 @@ const topic: DecisionTopic = {
 
 const screenedMarket: ScreenedMarket = {
   id: "screened_candidate_poly_1",
+  sourceCandidateMarketId: "candidate_poly_1",
   polymarketId: "poly_1",
   question: "Will the Fed cut rates in July?",
   outcomes: ["YES", "NO"],

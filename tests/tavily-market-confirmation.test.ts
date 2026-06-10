@@ -119,6 +119,7 @@ test("Tavily context confirms Candidate Markets into Screened Markets and create
   assert.deepEqual(result.screenedMarkets, [
     {
       id: "screened_candidate_poly_1",
+      sourceCandidateMarketId: "candidate_poly_1",
       polymarketId: "poly_1",
       question: "Will the Fed cut rates in July?",
       outcomes: ["YES", "NO"],
