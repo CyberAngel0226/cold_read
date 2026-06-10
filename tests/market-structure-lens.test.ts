@@ -3,6 +3,8 @@ import test from "node:test";
 
 import {
   adaptMarketStructureDraft,
+  generateMarketStructureDraftWithPython,
+  generateMarketStructureRecommendationWithPython,
   type EvidenceSnapshot,
   type MarketStructureRecommendationDraft,
 } from "../src/index.js";
@@ -213,4 +215,82 @@ test("rejects malformed Python Market Structure drafts before they become domain
       }),
     /Unsupported Market Structure action\./,
   );
+});
+
+test("runs the Python Market Structure Lens over an Evidence Snapshot and returns a draft", async () => {
+  const draft = await generateMarketStructureDraftWithPython({
+    evidenceSnapshot,
+  });
+
+  assert.deepEqual(draft, {
+    action: "BUY_YES_SMALL",
+    targetMarketId: "screened_candidate_poly_1",
+    rationale:
+      "Market structure favors a small YES position: YES price 0.92 is one-sided, liquidity 25000 and volume 100000 support a fixed small stake, and resolution rules are present.",
+    confidence: "MEDIUM",
+    riskLevel: "LOW",
+    evidenceRefs: ["screened_candidate_poly_1"],
+  });
+});
+
+test("runs the Python Market Structure Lens and returns HOLD when market structure is too weak", async () => {
+  const [market] = evidenceSnapshot.marketEvidence.screenedMarkets;
+  const weakMarketStructureSnapshot: EvidenceSnapshot = {
+    ...evidenceSnapshot,
+    marketEvidence: {
+      screenedMarkets: [
+        {
+          ...market,
+          liquidity: 250,
+          volume: 500,
+        },
+      ],
+    },
+  };
+
+  const draft = await generateMarketStructureDraftWithPython({
+    evidenceSnapshot: weakMarketStructureSnapshot,
+  });
+
+  assert.equal(draft.action, "HOLD");
+  assert.equal("targetMarketId" in draft, false);
+  assert.equal(draft.confidence, "LOW");
+  assert.equal(draft.riskLevel, "HIGH");
+  assert.deepEqual(draft.evidenceRefs, ["screened_candidate_poly_1"]);
+});
+
+test("runs the Python Market Structure Lens and adapts its draft into a domain recommendation", async () => {
+  const recommendation = await generateMarketStructureRecommendationWithPython({
+    evidenceSnapshot,
+    now: "2026-06-10T00:05:00.000Z",
+    createRecommendationId: () => "rec_market_structure_python_1",
+    createWalletActionProposalId: () => "wallet_action_python_1",
+    smallStakeAmount: "5.00",
+  });
+
+  assert.deepEqual(recommendation, {
+    id: "rec_market_structure_python_1",
+    decisionRunId: "run_1",
+    evidenceSnapshotId: "snapshot_1",
+    analysisLens: "MARKET_STRUCTURE",
+    action: "BUY_YES_SMALL",
+    targetMarketId: "screened_candidate_poly_1",
+    walletActionProposal: {
+      id: "wallet_action_python_1",
+      marketId: "screened_candidate_poly_1",
+      action: "BUY_YES_SMALL",
+      stake: {
+        amount: "5.00",
+        currency: "USDC",
+      },
+      rationale:
+        "Market structure favors a small YES position: YES price 0.92 is one-sided, liquidity 25000 and volume 100000 support a fixed small stake, and resolution rules are present.",
+    },
+    rationale:
+      "Market structure favors a small YES position: YES price 0.92 is one-sided, liquidity 25000 and volume 100000 support a fixed small stake, and resolution rules are present.",
+    confidence: "MEDIUM",
+    riskLevel: "LOW",
+    evidenceRefs: ["screened_candidate_poly_1"],
+    createdAt: "2026-06-10T00:05:00.000Z",
+  });
 });

@@ -1,3 +1,6 @@
+import { spawn } from "node:child_process";
+import { join } from "node:path";
+
 import type {
   AgentRecommendation,
   ConfidenceLevel,
@@ -16,6 +19,12 @@ export type MarketStructureRecommendationDraft = {
   evidenceRefs: readonly string[];
 };
 
+export type GenerateMarketStructureDraftWithPythonInput = {
+  evidenceSnapshot: EvidenceSnapshot;
+  pythonExecutable?: string;
+  scriptPath?: string;
+};
+
 export type AdaptMarketStructureDraftInput = {
   evidenceSnapshot: EvidenceSnapshot;
   draft: MarketStructureRecommendationDraft;
@@ -24,6 +33,32 @@ export type AdaptMarketStructureDraftInput = {
   createWalletActionProposalId: () => string;
   smallStakeAmount: string;
 };
+
+export type GenerateMarketStructureRecommendationWithPythonInput =
+  GenerateMarketStructureDraftWithPythonInput &
+    Omit<AdaptMarketStructureDraftInput, "draft">;
+
+export async function generateMarketStructureDraftWithPython(
+  input: GenerateMarketStructureDraftWithPythonInput,
+): Promise<MarketStructureRecommendationDraft> {
+  const stdout = await runPythonMarketStructureLens(input);
+  return parseMarketStructureDraft(stdout);
+}
+
+export async function generateMarketStructureRecommendationWithPython(
+  input: GenerateMarketStructureRecommendationWithPythonInput,
+): Promise<AgentRecommendation> {
+  const draft = await generateMarketStructureDraftWithPython(input);
+
+  return adaptMarketStructureDraft({
+    evidenceSnapshot: input.evidenceSnapshot,
+    draft,
+    now: input.now,
+    createRecommendationId: input.createRecommendationId,
+    createWalletActionProposalId: input.createWalletActionProposalId,
+    smallStakeAmount: input.smallStakeAmount,
+  });
+}
 
 export function adaptMarketStructureDraft(
   input: AdaptMarketStructureDraftInput,
@@ -85,6 +120,71 @@ export function adaptMarketStructureDraft(
   };
 }
 
+async function runPythonMarketStructureLens(
+  input: GenerateMarketStructureDraftWithPythonInput,
+): Promise<string> {
+  const pythonExecutable = input.pythonExecutable ?? "python3";
+  const scriptPath =
+    input.scriptPath ?? join(process.cwd(), "agents", "market_structure_lens.py");
+
+  return await new Promise((resolve, reject) => {
+    const child = spawn(pythonExecutable, [scriptPath, "--snapshot-file", "-"], {
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    const stdout: Buffer[] = [];
+    const stderr: Buffer[] = [];
+
+    child.stdout.on("data", (chunk: Buffer) => stdout.push(chunk));
+    child.stderr.on("data", (chunk: Buffer) => stderr.push(chunk));
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code !== 0) {
+        reject(
+          new Error(
+            `Python Market Structure Lens failed with exit code ${code}: ${Buffer.concat(stderr).toString("utf8").trim()}`,
+          ),
+        );
+        return;
+      }
+
+      resolve(Buffer.concat(stdout).toString("utf8"));
+    });
+
+    child.stdin.end(JSON.stringify(input.evidenceSnapshot));
+  });
+}
+
+function parseMarketStructureDraft(
+  stdout: string,
+): MarketStructureRecommendationDraft {
+  const parsed: unknown = JSON.parse(stdout);
+  if (!isMarketStructureRecommendationDraft(parsed)) {
+    throw new Error("Python Market Structure Lens returned a malformed draft.");
+  }
+
+  return parsed;
+}
+
+function isMarketStructureRecommendationDraft(
+  value: unknown,
+): value is MarketStructureRecommendationDraft {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const draft = value as Record<string, unknown>;
+  return (
+    isRecommendationAction(draft.action) &&
+    (draft.targetMarketId === undefined ||
+      typeof draft.targetMarketId === "string") &&
+    typeof draft.rationale === "string" &&
+    isConfidenceLevel(draft.confidence) &&
+    isRiskLevel(draft.riskLevel) &&
+    Array.isArray(draft.evidenceRefs) &&
+    draft.evidenceRefs.every((evidenceRef) => typeof evidenceRef === "string")
+  );
+}
+
 function validateAction(action: RecommendationAction): void {
   if (
     action !== "BUY_YES_SMALL"
@@ -106,4 +206,18 @@ function snapshotMarketIds(evidenceSnapshot: EvidenceSnapshot): Set<string> {
   return new Set(
     evidenceSnapshot.marketEvidence.screenedMarkets.map((market) => market.id),
   );
+}
+
+function isRecommendationAction(value: unknown): value is RecommendationAction {
+  return (
+    value === "BUY_YES_SMALL" || value === "BUY_NO_SMALL" || value === "HOLD"
+  );
+}
+
+function isConfidenceLevel(value: unknown): value is ConfidenceLevel {
+  return value === "LOW" || value === "MEDIUM" || value === "HIGH";
+}
+
+function isRiskLevel(value: unknown): value is RiskLevel {
+  return value === "LOW" || value === "MEDIUM" || value === "HIGH";
 }
