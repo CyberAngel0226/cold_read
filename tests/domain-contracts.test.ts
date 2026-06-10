@@ -16,7 +16,10 @@ import type {
   ScreeningOutcome,
   UserApproval,
 } from "../src/domain.js";
-import type { DecisionDossier as PublicDecisionDossier } from "../src/index.js";
+import type {
+  DecisionDossier as PublicDecisionDossier,
+  FetchedPolymarketMarket,
+} from "../src/index.js";
 
 const allowedAction: RecommendationAction = "BUY_YES_SMALL";
 
@@ -151,6 +154,31 @@ const candidateMarketScreeningResult: CandidateMarketScreeningResult = {
   ],
 };
 
+const fetchedPolymarketMarket: FetchedPolymarketMarket = {
+  id: "poly_1",
+  conditionId: "0xabc",
+  question: "Will the Fed cut rates at the next meeting?",
+  outcomes: ["YES", "NO"],
+  prices: {
+    YES: 0.92,
+    NO: 0.08,
+  },
+  status: "active",
+  volume: 100000,
+  liquidity: 25000,
+  closeTime: "2026-07-10T00:00:00.000Z",
+  resolutionRules: "Resolves YES if the Fed cuts rates at the next meeting.",
+  raw: {
+    id: "poly_1",
+  },
+};
+
+// @ts-expect-error Fetched Polymarket material must pass through Market Screener first.
+const fetchedAsCandidateMarket: CandidateMarket = fetchedPolymarketMarket;
+
+// @ts-expect-error Fetched Polymarket material is not a Tavily-confirmed Screened Market.
+const fetchedAsScreenedMarket: ScreenedMarket = fetchedPolymarketMarket;
+
 const decisionRun: DecisionRun = {
   kind: "decision_run",
   id: "run_1",
@@ -277,6 +305,9 @@ void candidateMarket;
 void candidateAsScreenedMarket;
 void marketRejection;
 void candidateMarketScreeningResult;
+void fetchedPolymarketMarket;
+void fetchedAsCandidateMarket;
+void fetchedAsScreenedMarket;
 void decisionRun;
 void evidenceSnapshot;
 void finalDecision;
