@@ -125,7 +125,8 @@ export function adaptMarketStructureDraft(
 async function runPythonMarketStructureLens(
   input: GenerateMarketStructureDraftWithPythonInput,
 ): Promise<string> {
-  const pythonExecutable = input.pythonExecutable ?? "python3";
+  const pythonExecutable =
+    input.pythonExecutable ?? process.env.PYTHON ?? "python";
   const scriptPath =
     input.scriptPath ?? join(process.cwd(), "agents", "market_structure_lens.py");
 

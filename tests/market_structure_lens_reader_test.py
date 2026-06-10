@@ -38,7 +38,7 @@ class MarketStructureLensReaderTest(unittest.TestCase):
     def test_cli_can_emit_an_llm_request_from_a_snapshot_file(self) -> None:
         result = subprocess.run(
             [
-                "python3",
+                sys.executable,
                 "agents/market_structure_lens.py",
                 "--snapshot-file",
                 str(FIXTURE_PATH),
