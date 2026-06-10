@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "npm run typecheck && tsc -p tsconfig.test.json && node .tmp/test-build/tests/decision-topic-intake.test.js && node .tmp/test-build/tests/polymarket-market-fetch.test.js && node .tmp/test-build/tests/candidate-market-screener.test.js && node .tmp/test-build/tests/tavily-market-confirmation.test.js && node .tmp/test-build/tests/evidence-snapshot.test.js"
+    "test": "npm run typecheck && tsc -p tsconfig.test.json && node .tmp/test-build/tests/decision-topic-intake.test.js && node .tmp/test-build/tests/polymarket-market-fetch.test.js && node .tmp/test-build/tests/candidate-market-screener.test.js && node .tmp/test-build/tests/tavily-market-confirmation.test.js && node .tmp/test-build/tests/evidence-snapshot.test.js && node .tmp/test-build/tests/market-structure-lens.test.js"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
