@@ -1,6 +1,8 @@
 import type {
   AgentRecommendation,
   AuditAnchor,
+  CandidateMarket,
+  CandidateMarketScreeningResult,
   DecisionDossier,
   DecisionRun,
   DecisionTopic,
@@ -8,6 +10,7 @@ import type {
   EvidenceSnapshot,
   ExecutionRecord,
   FinalDecision,
+  MarketRejection,
   RecommendationAction,
   ScreenedMarket,
   ScreeningOutcome,
@@ -102,6 +105,50 @@ const screenedMarket: ScreenedMarket = {
     rationale: "YES price is strongly one-sided.",
   },
   confirmationRationale: "Rules and context are clear enough for MVP analysis.",
+};
+
+const candidateMarket: CandidateMarket = {
+  id: "candidate_1",
+  sourceMarketId: "market_1",
+  question: "Will the Fed cut rates at the next meeting?",
+  outcomes: ["YES", "NO"],
+  prices: {
+    yes: 0.92,
+    no: 0.08,
+  },
+  volume: 100000,
+  liquidity: 25000,
+  closeTime: "2026-07-10T00:00:00.000Z",
+  resolutionRules: "Resolves YES if the Fed cuts rates at the next meeting.",
+  oneSidedSignal: {
+    side: "YES",
+    price: 0.92,
+    rationale: "YES price is strongly one-sided.",
+  },
+  screeningRationale: "Polymarket-only gates passed.",
+};
+
+// @ts-expect-error Candidate Markets are not Tavily-confirmed Screened Markets.
+const candidateAsScreenedMarket: ScreenedMarket = candidateMarket;
+
+const marketRejection: MarketRejection = {
+  sourceMarketId: "market_2",
+  reason: "LOW_LIQUIDITY",
+  message: "Liquidity cannot support a Small Stake.",
+  rejectedAt: "2026-06-10T00:02:00.000Z",
+};
+
+const candidateMarketScreeningResult: CandidateMarketScreeningResult = {
+  kind: "candidate_markets_screened",
+  topicId: "topic_1",
+  screenedAt: "2026-06-10T00:02:00.000Z",
+  candidateMarkets: [candidateMarket],
+  rejectedMarkets: [marketRejection],
+  timeline: [
+    "topic_received",
+    "markets_fetched",
+    "candidate_markets_screened",
+  ],
 };
 
 const decisionRun: DecisionRun = {
@@ -226,6 +273,10 @@ void holdRecommendation;
 void buyYesRecommendation;
 void decisionTopic;
 void noMarketOutcome;
+void candidateMarket;
+void candidateAsScreenedMarket;
+void marketRejection;
+void candidateMarketScreeningResult;
 void decisionRun;
 void evidenceSnapshot;
 void finalDecision;
