@@ -46,6 +46,13 @@ const candidateMarketScreeningResult: CandidateMarketScreeningResult = {
   candidateMarkets: [candidateMarket],
 };
 
+const blockedCandidateMarket: CandidateMarket = {
+  ...candidateMarket,
+  id: "candidate_poly_2",
+  sourceMarketId: "poly_2",
+  question: "Will the Fed hold rates in September?",
+};
+
 test("Tavily is not called when Polymarket-only screening found no Candidate Markets", async () => {
   let tavilyCalls = 0;
 
@@ -176,4 +183,60 @@ test("major Tavily counterevidence blocks promotion to Screened Market", async (
     rejectedMarketCount: 1,
     createdAt: "2026-06-10T00:03:00.000Z",
   });
+});
+
+test("mixed Tavily confirmation promotes clean Candidate Markets while preserving blocked market evidence", async () => {
+  const result = await confirmScreenedMarketsWithTavily({
+    candidateMarketScreeningResult: {
+      ...candidateMarketScreeningResult,
+      candidateMarkets: [candidateMarket, blockedCandidateMarket],
+    },
+    now: "2026-06-10T00:03:00.000Z",
+    createDecisionRunId: () => "run_1",
+    queryTavily: async (market) => {
+      if (market.id === "candidate_poly_2") {
+        return [
+          {
+            url: "https://example.com/hold-reversal-risk",
+            title: "Hold rate reversal risk",
+            summary: "A major new signal contradicts the hold-rate market view.",
+            majorCounterevidence: true,
+          },
+        ];
+      }
+
+      return [
+        {
+          url: "https://example.com/fed-context",
+          title: "Fed rate context",
+          summary: "Recent public statements do not show a major reversal risk.",
+        },
+      ];
+    },
+  });
+
+  assert.equal(result.kind, "high_conviction_markets_confirmed");
+  assert.deepEqual(
+    result.screenedMarkets.map((market) => market.id),
+    ["screened_candidate_poly_1"],
+  );
+  assert.deepEqual(result.decisionRun.screenedMarketIds, [
+    "screened_candidate_poly_1",
+  ]);
+  assert.deepEqual(
+    result.contextEvidenceItems.map((item) => ({
+      marketId: item.marketId,
+      sourceUrl: item.sourceUrl,
+    })),
+    [
+      {
+        marketId: "candidate_poly_1",
+        sourceUrl: "https://example.com/fed-context",
+      },
+      {
+        marketId: "candidate_poly_2",
+        sourceUrl: "https://example.com/hold-reversal-risk",
+      },
+    ],
+  );
 });
