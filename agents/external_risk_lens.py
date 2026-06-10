@@ -154,9 +154,9 @@ def _context_for_market(
 
 def _context_market_ids(market: dict[str, Any]) -> list[str]:
     market_ids = [market["id"]]
-    screened_prefix = "screened_"
-    if market["id"].startswith(screened_prefix):
-        market_ids.append(market["id"][len(screened_prefix) :])
+    source_candidate_market_id = market.get("sourceCandidateMarketId")
+    if isinstance(source_candidate_market_id, str):
+        market_ids.append(source_candidate_market_id)
     return _unique(market_ids)
 
 

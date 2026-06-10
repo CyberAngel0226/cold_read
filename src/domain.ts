@@ -87,6 +87,7 @@ export type CandidateMarketScreeningResult = {
 
 export type ScreenedMarket = {
   id: string;
+  sourceCandidateMarketId: string;
   polymarketId: string;
   question: string;
   outcomes: readonly ["YES", "NO"];

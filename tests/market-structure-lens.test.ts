@@ -15,9 +15,10 @@ const evidenceSnapshot: EvidenceSnapshot = {
   createdAt: "2026-06-10T00:04:00.000Z",
   marketEvidence: {
     screenedMarkets: [
-      {
-        id: "screened_candidate_poly_1",
-        polymarketId: "poly_1",
+        {
+          id: "screened_candidate_poly_1",
+          sourceCandidateMarketId: "candidate_poly_1",
+          polymarketId: "poly_1",
         question: "Will the Fed cut rates in July?",
         outcomes: ["YES", "NO"],
         prices: {

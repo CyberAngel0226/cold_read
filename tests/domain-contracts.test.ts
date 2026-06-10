@@ -91,6 +91,7 @@ const noMarketOutcome: ScreeningOutcome = {
 
 const screenedMarket: ScreenedMarket = {
   id: "market_1",
+  sourceCandidateMarketId: "candidate_1",
   polymarketId: "poly_1",
   question: "Will the Fed cut rates at the next meeting?",
   outcomes: ["YES", "NO"],
