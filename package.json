@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "npm run typecheck && tsc -p tsconfig.test.json && node .tmp/test-build/tests/decision-topic-intake.test.js"
+    "test": "npm run typecheck && tsc -p tsconfig.test.json && node .tmp/test-build/tests/decision-topic-intake.test.js && node .tmp/test-build/tests/polymarket-market-fetch.test.js"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
