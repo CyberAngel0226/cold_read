@@ -8,6 +8,7 @@ import {
 
 test("fetches related Polymarket markets for a Decision Topic and preserves screening fields", async () => {
   const intake = createDecisionTopicIntake({
+    id: "topic_fed_rates",
     text: "Fed rate cut",
     submittedBy: "user_1",
     now: "2026-06-10T00:00:00.000Z",
@@ -78,6 +79,7 @@ test("fetches related Polymarket markets for a Decision Topic and preserves scre
 
 test("empty Polymarket results still produce a markets_fetched state", async () => {
   const intake = createDecisionTopicIntake({
+    id: "topic_no_matching_market",
     text: "No matching market",
     now: "2026-06-10T00:00:00.000Z",
   });
@@ -99,6 +101,7 @@ test("empty Polymarket results still produce a markets_fetched state", async () 
 
 test("failed Polymarket requests produce a recoverable fetch failure", async () => {
   const intake = createDecisionTopicIntake({
+    id: "topic_fetch_failure",
     text: "Fed rate cut",
     now: "2026-06-10T00:00:00.000Z",
   });
@@ -125,6 +128,7 @@ test("failed Polymarket requests produce a recoverable fetch failure", async () 
 
 test("network errors during Polymarket fetch are recoverable", async () => {
   const intake = createDecisionTopicIntake({
+    id: "topic_network_error",
     text: "Fed rate cut",
     now: "2026-06-10T00:00:00.000Z",
   });

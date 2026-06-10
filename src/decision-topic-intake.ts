@@ -6,6 +6,7 @@ import type {
 } from "./domain.js";
 
 export type CreateDecisionTopicIntakeInput = {
+  id: string;
   text: string;
   submittedBy?: string;
   now: IsoTimestamp;
@@ -35,7 +36,7 @@ export function createDecisionTopicIntake(
 ): DecisionTopicIntake {
   return {
     topic: {
-      id: "topic_1",
+      id: input.id,
       text: input.text,
       submittedBy: input.submittedBy,
       receivedAt: input.now,
