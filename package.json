@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "npm run typecheck"
+    "test": "npm run typecheck && tsc -p tsconfig.test.json && node .tmp/test-build/tests/decision-topic-intake.test.js && node .tmp/test-build/tests/polymarket-market-fetch.test.js"
   },
   "devDependencies": {
+    "@types/node": "^24.10.1",
     "typescript": "^5.8.3"
   }
 }
