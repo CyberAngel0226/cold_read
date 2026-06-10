@@ -5,3 +5,4 @@ export * from "./candidate-market-screener.js";
 export * from "./tavily-market-confirmation.js";
 export * from "./evidence-snapshot.js";
 export * from "./market-structure-lens.js";
+export * from "./external-risk-lens.js";
