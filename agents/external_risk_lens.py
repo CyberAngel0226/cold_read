@@ -84,7 +84,7 @@ def generate_external_risk_draft(
     hold_flags: list[str] = []
 
     for market in markets:
-        market_context = context_by_market.get(market["id"], [])
+        market_context = _context_for_market(context_by_market, market)
         market_context_ids = [item["id"] for item in market_context]
         flags = _external_risk_flags(market_context)
 
@@ -140,6 +140,24 @@ def _group_context_by_market(
     for item in context_items:
         grouped.setdefault(item["marketId"], []).append(item)
     return grouped
+
+
+def _context_for_market(
+    context_by_market: dict[str, list[dict[str, Any]]],
+    market: dict[str, Any],
+) -> list[dict[str, Any]]:
+    context_items: list[dict[str, Any]] = []
+    for market_id in _context_market_ids(market):
+        context_items.extend(context_by_market.get(market_id, []))
+    return context_items
+
+
+def _context_market_ids(market: dict[str, Any]) -> list[str]:
+    market_ids = [market["id"]]
+    screened_prefix = "screened_"
+    if market["id"].startswith(screened_prefix):
+        market_ids.append(market["id"][len(screened_prefix) :])
+    return _unique(market_ids)
 
 
 def _external_risk_flags(context_items: list[dict[str, Any]]) -> list[str]:

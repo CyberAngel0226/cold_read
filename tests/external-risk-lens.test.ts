@@ -3,8 +3,13 @@ import test from "node:test";
 
 import {
   adaptExternalRiskDraft,
+  confirmScreenedMarketsWithTavily,
+  freezeEvidenceSnapshot,
   generateExternalRiskDraftWithPython,
   generateExternalRiskRecommendationWithPython,
+  type CandidateMarket,
+  type CandidateMarketScreeningResult,
+  type DecisionTopic,
   type EvidenceSnapshot,
   type ExternalRiskRecommendationDraft,
 } from "../src/index.js";
@@ -49,6 +54,47 @@ const evidenceSnapshot: EvidenceSnapshot = {
       },
     ],
   },
+};
+
+const candidateMarket: CandidateMarket = {
+  id: "candidate_poly_1",
+  sourceMarketId: "poly_1",
+  question: "Will the Fed cut rates in July?",
+  outcomes: ["YES", "NO"],
+  prices: {
+    yes: 0.92,
+    no: 0.08,
+  },
+  volume: 100000,
+  liquidity: 25000,
+  closeTime: "2026-07-10T00:00:00.000Z",
+  resolutionRules: "Resolves YES if the Fed cuts rates in July.",
+  oneSidedSignal: {
+    side: "YES",
+    price: 0.92,
+    rationale: "YES price is strongly one-sided.",
+  },
+  screeningRationale: "Polymarket-only hard gates passed.",
+};
+
+const candidateMarketScreeningResult: CandidateMarketScreeningResult = {
+  kind: "candidate_markets_screened",
+  topicId: "topic_fed_rates",
+  screenedAt: "2026-06-10T00:02:00.000Z",
+  candidateMarkets: [candidateMarket],
+  rejectedMarkets: [],
+  timeline: [
+    "topic_received",
+    "markets_fetched",
+    "candidate_markets_screened",
+  ],
+};
+
+const topic: DecisionTopic = {
+  id: "topic_fed_rates",
+  text: "Fed rate cut",
+  submittedBy: "user_1",
+  receivedAt: "2026-06-10T00:00:00.000Z",
 };
 
 test("adapts a low-risk Python External Risk BUY_YES draft into a domain Agent Recommendation", () => {
@@ -272,6 +318,45 @@ test("runs the Python External Risk Lens over an Evidence Snapshot and returns a
     confidence: "MEDIUM",
     riskLevel: "LOW",
     evidenceRefs: ["context_1"],
+    externalRiskFlags: [],
+  });
+});
+
+test("runs the Python External Risk Lens over a frozen Tavily-confirmed Evidence Snapshot", async () => {
+  const tavilyResult = await confirmScreenedMarketsWithTavily({
+    candidateMarketScreeningResult,
+    now: "2026-06-10T00:03:00.000Z",
+    createDecisionRunId: () => "run_1",
+    queryTavily: async () => [
+      {
+        url: "https://example.com/fed-context",
+        title: "Fed rate context",
+        summary: "No major contrary evidence found.",
+      },
+    ],
+  });
+  assert.equal(tavilyResult.kind, "high_conviction_markets_confirmed");
+
+  const frozen = freezeEvidenceSnapshot({
+    topic,
+    highConvictionMarketsConfirmed: tavilyResult,
+    now: "2026-06-10T00:04:00.000Z",
+    createEvidenceSnapshotId: () => "snapshot_1",
+    createDecisionDossierDraftId: () => "dossier_1",
+  });
+
+  const draft = await generateExternalRiskDraftWithPython({
+    evidenceSnapshot: frozen.evidenceSnapshot,
+  });
+
+  assert.deepEqual(draft, {
+    action: "BUY_YES_SMALL",
+    targetMarketId: "screened_candidate_poly_1",
+    rationale:
+      "External context does not undermine the one-sided YES signal: 1 context item(s) cite no major counterevidence, reversal risk, late-breaking event, or resolution dispute.",
+    confidence: "MEDIUM",
+    riskLevel: "LOW",
+    evidenceRefs: ["context_candidate_poly_1_1"],
     externalRiskFlags: [],
   });
 });
