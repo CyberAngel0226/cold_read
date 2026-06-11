@@ -9,6 +9,7 @@ import {
   type EvidenceSnapshot,
   type FinalDecision,
 } from "../src/index.js";
+import { timelineEntries, timelineStates } from "./helpers.js";
 
 const evidenceSnapshot: EvidenceSnapshot = {
   id: "snapshot_1",
@@ -91,7 +92,7 @@ const decisionDossier: DecisionDossier = {
   agentRecommendations: [agentRecommendation],
   finalDecision: buyFinalDecision,
   auditAnchors: [],
-  timeline: [
+  timeline: timelineEntries([
     "topic_received",
     "markets_fetched",
     "candidate_markets_screened",
@@ -99,7 +100,7 @@ const decisionDossier: DecisionDossier = {
     "evidence_snapshot_created",
     "agent_recommendations_created",
     "final_decision_selected",
-  ],
+  ]),
 };
 
 test("records User Approval and deferred Execution Record for a BUY Final Decision", () => {
@@ -137,7 +138,7 @@ test("records User Approval and deferred Execution Record for a BUY Final Decisi
   assert.deepEqual(result.decisionDossier.userApproval, result.userApproval);
   assert.deepEqual(result.decisionDossier.executionRecord, result.executionRecord);
   assert.equal(result.decisionDossier.decisionRun.status, "EXECUTION_RECORD_CREATED");
-  assert.deepEqual(result.decisionDossier.timeline.slice(-2), [
+  assert.deepEqual(timelineStates(result.decisionDossier.timeline).slice(-2), [
     "user_approval_recorded",
     "execution_record_created",
   ]);

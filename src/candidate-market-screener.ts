@@ -4,19 +4,20 @@ import type {
   CandidateMarket,
   CandidateMarketScreeningResult,
   DecisionTopic,
-  DecisionTimelineState,
+  DecisionTimelineEntry,
   IsoTimestamp,
   MarketRejection,
   MarketRejectionReason,
   OneSidedSignal,
   ScreeningOutcome,
 } from "./domain.js";
+import { appendTimelineEntry } from "./decision-timeline.js";
 import type { DecisionTopicIntake } from "./decision-topic-intake.js";
 import type { FetchedPolymarketMarket } from "./polymarket-market-fetch.js";
 
 export type ScreenCandidateMarketsInput = {
   topicId: string;
-  timeline: readonly DecisionTimelineState[];
+  timeline: readonly DecisionTimelineEntry[];
   markets: readonly FetchedPolymarketMarket[];
   now: IsoTimestamp;
   minimumLiquidity: number;
@@ -36,7 +37,7 @@ export type CandidateMarketsAvailableResult = {
   topic: DecisionTopic;
   candidateMarketScreeningResult: CandidateMarketScreeningResult;
   decisionRun: undefined;
-  timeline: readonly DecisionTimelineState[];
+  timeline: readonly DecisionTimelineEntry[];
 };
 
 export type NoCandidateMarketsResult = {
@@ -45,7 +46,7 @@ export type NoCandidateMarketsResult = {
   candidateMarketScreeningResult: CandidateMarketScreeningResult;
   screeningOutcome: ScreeningOutcome;
   decisionRun: undefined;
-  timeline: readonly DecisionTimelineState[];
+  timeline: readonly DecisionTimelineEntry[];
 };
 
 export type ScreenCandidateMarketsForTopicResult =
@@ -57,7 +58,11 @@ export function screenCandidateMarketsForTopic(
 ): ScreenCandidateMarketsForTopicResult {
   const candidateMarketScreeningResult = screenCandidateMarkets({
     topicId: input.intake.topic.id,
-    timeline: [...input.intake.timeline, "markets_fetched"],
+    timeline: appendTimelineEntry({
+      timeline: input.intake.timeline,
+      state: "markets_fetched",
+      at: input.now,
+    }),
     markets: input.markets,
     now: input.now,
     minimumLiquidity: input.minimumLiquidity,
@@ -121,7 +126,13 @@ export function screenCandidateMarkets(
     screenedAt: input.now,
     candidateMarkets,
     rejectedMarkets,
-    timeline: [...input.timeline, "candidate_markets_screened"],
+    timeline: appendTimelineEntry({
+      timeline: input.timeline,
+      state: "candidate_markets_screened",
+      at: input.now,
+      summary: `${candidateMarkets.length} candidate market(s), ${rejectedMarkets.length} rejection(s).`,
+      refs: candidateMarkets.map((market) => market.id),
+    }),
   };
 }
 

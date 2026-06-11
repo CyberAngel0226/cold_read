@@ -16,6 +16,7 @@ import type {
   ScreeningOutcome,
   UserApproval,
 } from "../src/domain.js";
+import { createTimelineEntry } from "../src/index.js";
 import type {
   DecisionDossier as PublicDecisionDossier,
   FetchedPolymarketMarket,
@@ -23,7 +24,7 @@ import type {
 
 const allowedAction: RecommendationAction = "BUY_YES_SMALL";
 
-const fullMvpTimeline: DecisionTimelineState[] = [
+const fullMvpTimelineStates: DecisionTimelineState[] = [
   "topic_received",
   "markets_fetched",
   "candidate_markets_screened",
@@ -35,6 +36,10 @@ const fullMvpTimeline: DecisionTimelineState[] = [
   "user_approval_recorded",
   "execution_record_created",
 ];
+
+const fullMvpTimeline = fullMvpTimelineStates.map((state) =>
+  createTimelineEntry(state, "2026-06-10T00:00:00.000Z"),
+);
 
 const holdRecommendation: AgentRecommendation = {
   id: "rec_1",
@@ -148,11 +153,13 @@ const candidateMarketScreeningResult: CandidateMarketScreeningResult = {
   screenedAt: "2026-06-10T00:02:00.000Z",
   candidateMarkets: [candidateMarket],
   rejectedMarkets: [marketRejection],
-  timeline: [
+  timeline: ([
     "topic_received",
     "markets_fetched",
     "candidate_markets_screened",
-  ],
+  ] satisfies DecisionTimelineState[]).map((state) =>
+    createTimelineEntry(state, "2026-06-10T00:00:00.000Z"),
+  ),
 };
 
 const fetchedPolymarketMarket: FetchedPolymarketMarket = {
@@ -297,6 +304,7 @@ const malformedHoldRecommendation: AgentRecommendation = {
 };
 
 void allowedAction;
+void fullMvpTimelineStates;
 void fullMvpTimeline;
 void holdRecommendation;
 void buyYesRecommendation;

@@ -11,6 +11,7 @@ import {
   type ExecutionRecord,
   type FinalDecision,
 } from "../src/index.js";
+import { timelineEntries } from "./helpers.js";
 
 test("canonical audit payloads are stable for equivalent object key order", () => {
   const left = {
@@ -144,7 +145,7 @@ const decisionDossier: DecisionDossier = {
   finalDecision,
   auditAnchors: [],
   executionRecord,
-  timeline: [
+  timeline: timelineEntries([
     "topic_received",
     "markets_fetched",
     "candidate_markets_screened",
@@ -152,7 +153,7 @@ const decisionDossier: DecisionDossier = {
     "evidence_snapshot_created",
     "agent_recommendations_created",
     "final_decision_selected",
-  ],
+  ]),
 };
 
 test("creates Decision Dossier audit payload hash metadata for audit-relevant sections", () => {

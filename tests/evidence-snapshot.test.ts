@@ -9,6 +9,7 @@ import {
   type HighConvictionMarketsConfirmedResult,
   type ScreenedMarket,
 } from "../src/index.js";
+import { timelineEntries, timelineStates } from "./helpers.js";
 
 const topic: DecisionTopic = {
   id: "topic_fed_rates",
@@ -62,12 +63,12 @@ const highConvictionMarketsConfirmed: HighConvictionMarketsConfirmedResult = {
   screenedMarkets: [screenedMarket],
   contextEvidenceItems: [contextEvidenceItem],
   decisionRun,
-  timeline: [
+  timeline: timelineEntries([
     "topic_received",
     "markets_fetched",
     "candidate_markets_screened",
     "high_conviction_markets_confirmed",
-  ],
+  ]),
 };
 
 test("freezes Screened Markets and context evidence into an Evidence Snapshot and Decision Dossier draft", () => {
@@ -102,14 +103,15 @@ test("freezes Screened Markets and context evidence into an Evidence Snapshot an
       status: "EVIDENCE_SNAPSHOT_CREATED",
     },
     evidenceSnapshot: result.evidenceSnapshot,
-    timeline: [
-      "topic_received",
-      "markets_fetched",
-      "candidate_markets_screened",
-      "high_conviction_markets_confirmed",
-      "evidence_snapshot_created",
-    ],
+    timeline: result.timeline,
   });
+  assert.deepEqual(timelineStates(result.timeline), [
+    "topic_received",
+    "markets_fetched",
+    "candidate_markets_screened",
+    "high_conviction_markets_confirmed",
+    "evidence_snapshot_created",
+  ]);
 });
 
 test("downstream analysis receives the same frozen Evidence Snapshot reference", () => {

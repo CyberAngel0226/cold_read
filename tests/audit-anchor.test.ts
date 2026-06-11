@@ -10,6 +10,7 @@ import {
   type EvidenceSnapshot,
   type FinalDecision,
 } from "../src/index.js";
+import { timelineEntries } from "./helpers.js";
 
 const evidenceSnapshot: EvidenceSnapshot = {
   id: "snapshot_1",
@@ -109,7 +110,7 @@ const decisionDossier: DecisionDossier = {
   agentRecommendations: [agentRecommendation],
   finalDecision,
   auditAnchors: [],
-  timeline: [
+  timeline: timelineEntries([
     "topic_received",
     "markets_fetched",
     "candidate_markets_screened",
@@ -117,7 +118,7 @@ const decisionDossier: DecisionDossier = {
     "evidence_snapshot_created",
     "agent_recommendations_created",
     "final_decision_selected",
-  ],
+  ]),
 };
 
 test("constructs a minimal Audit Anchor request from Decision Dossier hashes", () => {
@@ -175,7 +176,7 @@ test("records returned Audit Anchor metadata on the Decision Dossier", () => {
   assert.deepEqual(result.decisionDossier.auditAnchors, [result.auditAnchor]);
   assert.equal(result.decisionDossier.decisionRun.status, "AUDIT_ANCHOR_WRITTEN");
   assert.equal(
-    result.decisionDossier.timeline.at(-1),
+    result.decisionDossier.timeline.at(-1)?.state,
     "audit_anchor_written",
   );
 });

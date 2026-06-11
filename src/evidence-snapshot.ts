@@ -1,10 +1,11 @@
 import type {
   DecisionRun,
-  DecisionTimelineState,
+  DecisionTimelineEntry,
   DecisionTopic,
   EvidenceSnapshot,
   IsoTimestamp,
 } from "./domain.js";
+import { appendTimelineEntry } from "./decision-timeline.js";
 import type { HighConvictionMarketsConfirmedResult } from "./tavily-market-confirmation.js";
 
 export type DecisionDossierDraft = {
@@ -12,7 +13,7 @@ export type DecisionDossierDraft = {
   topic: DecisionTopic;
   decisionRun: DecisionRun;
   evidenceSnapshot: EvidenceSnapshot;
-  timeline: readonly DecisionTimelineState[];
+  timeline: readonly DecisionTimelineEntry[];
 };
 
 export type FreezeEvidenceSnapshotInput = {
@@ -29,7 +30,7 @@ export type EvidenceSnapshotFrozenResult = {
   evidenceSnapshot: EvidenceSnapshot;
   analysisEvidenceSnapshot: EvidenceSnapshot;
   decisionDossierDraft: DecisionDossierDraft;
-  timeline: readonly DecisionTimelineState[];
+  timeline: readonly DecisionTimelineEntry[];
 };
 
 export function freezeEvidenceSnapshot(
@@ -43,12 +44,15 @@ export function freezeEvidenceSnapshot(
     ...input.highConvictionMarketsConfirmed.decisionRun,
     status: "EVIDENCE_SNAPSHOT_CREATED",
   };
-  const timeline: readonly DecisionTimelineState[] = [
-    ...input.highConvictionMarketsConfirmed.timeline,
-    "evidence_snapshot_created",
-  ];
+  const evidenceSnapshotId = input.createEvidenceSnapshotId();
+  const timeline: readonly DecisionTimelineEntry[] = appendTimelineEntry({
+    timeline: input.highConvictionMarketsConfirmed.timeline,
+    state: "evidence_snapshot_created",
+    at: input.now,
+    refs: [evidenceSnapshotId],
+  });
   const evidenceSnapshot: EvidenceSnapshot = {
-    id: input.createEvidenceSnapshotId(),
+    id: evidenceSnapshotId,
     decisionRunId: decisionRun.id,
     createdAt: input.now,
     marketEvidence: {

@@ -8,6 +8,7 @@ import {
   type FetchedPolymarketMarket,
   type MarketRejectionReason,
 } from "../src/index.js";
+import { timelineEntries, timelineStates } from "./helpers.js";
 
 const validMarket: FetchedPolymarketMarket = {
   id: "poly_1",
@@ -35,7 +36,7 @@ test("active Yes/No market with clear rules, liquidity, runway, and one-sided pr
 
   const result = screenCandidateMarkets({
     topicId: intake.topic.id,
-    timeline: [...intake.timeline, "markets_fetched"],
+    timeline: timelineEntries(["topic_received", "markets_fetched"]),
     markets: [validMarket],
     now: "2026-06-10T00:02:00.000Z",
     minimumLiquidity: 1000,
@@ -43,7 +44,7 @@ test("active Yes/No market with clear rules, liquidity, runway, and one-sided pr
     oneSidedPriceThreshold: 0.85,
   });
 
-  assert.deepEqual(result.timeline, [
+  assert.deepEqual(timelineStates(result.timeline), [
     "topic_received",
     "markets_fetched",
     "candidate_markets_screened",
@@ -75,7 +76,7 @@ test("active Yes/No market with clear rules, liquidity, runway, and one-sided pr
 test("NO side exact threshold creates a symmetric One-Sided Signal", () => {
   const result = screenCandidateMarkets({
     topicId: "topic_fed_rates",
-    timeline: ["topic_received", "markets_fetched"],
+    timeline: timelineEntries(["topic_received", "markets_fetched"]),
     markets: [
       {
         ...validMarket,
@@ -103,7 +104,7 @@ test("NO side exact threshold creates a symmetric One-Sided Signal", () => {
 test("closed or paused markets are rejected before they become Candidate Markets", () => {
   const result = screenCandidateMarkets({
     topicId: "topic_fed_rates",
-    timeline: ["topic_received", "markets_fetched"],
+    timeline: timelineEntries(["topic_received", "markets_fetched"]),
     markets: [
       {
         id: "poly_closed",
@@ -243,7 +244,7 @@ test("Polymarket-only hard gates reject markets before Candidate Market creation
   for (const { name, market, reason } of cases) {
     const result = screenCandidateMarkets({
       topicId: "topic_fed_rates",
-      timeline: ["topic_received", "markets_fetched"],
+      timeline: timelineEntries(["topic_received", "markets_fetched"]),
       markets: [market],
       now: "2026-06-10T00:02:00.000Z",
       minimumLiquidity: 1000,
@@ -289,7 +290,7 @@ test("all rejected Candidate Markets return a Screening Outcome without a Decisi
     rejectedMarketCount: 1,
     createdAt: "2026-06-10T00:02:00.000Z",
   });
-  assert.deepEqual(result.timeline, [
+  assert.deepEqual(timelineStates(result.timeline), [
     "topic_received",
     "markets_fetched",
     "candidate_markets_screened",
