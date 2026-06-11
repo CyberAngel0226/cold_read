@@ -6,3 +6,4 @@ export * from "./tavily-market-confirmation.js";
 export * from "./evidence-snapshot.js";
 export * from "./market-structure-lens.js";
 export * from "./external-risk-lens.js";
+export * from "./decision-scorer.js";
