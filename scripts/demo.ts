@@ -49,6 +49,7 @@ async function main() {
       externalRiskFlags: [] as const,
     }),
     smallStakeAmount: "5.00",
+    approvedBy: "demo_user",
     createTopicId: nextId("topic"),
     createScreeningId: nextId("screening"),
     createEvidenceSnapshotId: nextId("snapshot"),
@@ -58,6 +59,9 @@ async function main() {
     createExternalRiskRecommendationId: nextId("rec_er"),
     createWalletActionProposalId: nextId("wallet"),
     createFinalDecisionId: nextId("decision"),
+    createAuditAnchorId: nextId("anchor"),
+    createUserApprovalId: nextId("approval"),
+    createExecutionRecordId: nextId("execution"),
   });
 
   if (result.kind === "screening_outcome") {
@@ -127,6 +131,32 @@ async function main() {
   console.log(`  Evidence Snapshot:    ${auditPayload.hashes.evidenceSnapshot.hash}`);
   console.log(`  Agent Recommendations: ${auditPayload.hashes.agentRecommendations.hash}`);
   console.log(`  Final Decision:       ${auditPayload.hashes.finalDecision.hash}`);
+
+  // ── Audit Anchor ──
+  if (dossier.auditAnchors.length > 0) {
+    const anchor = dossier.auditAnchors[0];
+    console.log(`\n  Audit Anchor:`);
+    console.log(`  ─────────────`);
+    console.log(`  ID:              ${anchor.id}`);
+    console.log(`  Network:         ${anchor.network}`);
+    console.log(`  Content Hash:    ${anchor.contentHash}`);
+  }
+
+  // ── User Approval & Execution Record ──
+  if (dossier.userApproval) {
+    console.log(`\n  User Approval:`);
+    console.log(`  ──────────────`);
+    console.log(`  ID:          ${dossier.userApproval.id}`);
+    console.log(`  Approved By: ${dossier.userApproval.approvedBy}`);
+    console.log(`  Approved At: ${dossier.userApproval.approvedAt}`);
+  }
+  if (dossier.executionRecord) {
+    console.log(`\n  Execution Record:`);
+    console.log(`  ─────────────────`);
+    console.log(`  ID:     ${dossier.executionRecord.id}`);
+    console.log(`  Status: ${dossier.executionRecord.status}`);
+    console.log(`  Note:   ${dossier.executionRecord.note}`);
+  }
 
   // ── MVP Disclosure ──
   console.log(`\n  MVP records approval and audit metadata; it does not place real prediction market trades.`);

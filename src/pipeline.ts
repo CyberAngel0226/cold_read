@@ -25,6 +25,12 @@ import {
   type ExternalRiskRecommendationDraft,
 } from "./external-risk-lens.js";
 import { selectFinalDecision } from "./decision-scorer.js";
+import { createDecisionDossierAuditPayload } from "./decision-dossier-audit.js";
+import {
+  createAuditAnchorRequest,
+  recordAuditAnchorMetadata,
+} from "./audit-anchor.js";
+import { recordUserApproval } from "./user-approval.js";
 import { appendTimelineEntry } from "./decision-timeline.js";
 import type { AgentRecommendation } from "./domain.js";
 
@@ -42,6 +48,7 @@ export type RunDecisionPipelineInput = {
     evidenceSnapshot: EvidenceSnapshot,
   ) => Promise<ExternalRiskRecommendationDraft>;
   smallStakeAmount: string;
+  approvedBy?: string;
   vetoConditions?: readonly VetoCondition[];
   minimumLiquidity?: number;
   minimumHoursUntilClose?: number;
@@ -55,6 +62,9 @@ export type RunDecisionPipelineInput = {
   createExternalRiskRecommendationId: () => string;
   createWalletActionProposalId: () => string;
   createFinalDecisionId: () => string;
+  createAuditAnchorId: () => string;
+  createUserApprovalId: () => string;
+  createExecutionRecordId: () => string;
 };
 
 export type DecisionRunCompleteResult = {
@@ -166,7 +176,7 @@ export async function runDecisionPipeline(
     }),
   };
 
-  const dossier: DecisionDossier = {
+  const dossierWithFinalDecision: DecisionDossier = {
     ...dossierWithRecommendations,
     decisionRun: {
       ...dossierWithRecommendations.decisionRun,
@@ -181,6 +191,36 @@ export async function runDecisionPipeline(
       refs: [finalDecision.id],
     }),
   };
+
+  const auditPayload = createDecisionDossierAuditPayload(dossierWithFinalDecision);
+  const anchorRequest = createAuditAnchorRequest({
+    auditPayload,
+    network: "testnet",
+  });
+
+  const anchorResult = recordAuditAnchorMetadata({
+    decisionDossier: dossierWithFinalDecision,
+    anchorRequest,
+    chainMetadata: { network: "testnet" },
+    now: input.now,
+    createAuditAnchorId: input.createAuditAnchorId,
+  });
+
+  let dossier = anchorResult.decisionDossier;
+
+  if (
+    finalDecision.action !== "HOLD" &&
+    input.approvedBy !== undefined
+  ) {
+    const approvalResult = recordUserApproval({
+      decisionDossier: dossier,
+      approvedBy: input.approvedBy,
+      now: input.now,
+      createUserApprovalId: input.createUserApprovalId,
+      createExecutionRecordId: input.createExecutionRecordId,
+    });
+    dossier = approvalResult.decisionDossier;
+  }
 
   return {
     kind: "decision_run_complete",
