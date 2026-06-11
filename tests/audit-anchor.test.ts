@@ -179,3 +179,31 @@ test("records returned Audit Anchor metadata on the Decision Dossier", () => {
     "audit_anchor_written",
   );
 });
+
+test("records Audit Anchor metadata when no transaction hash is returned", () => {
+  const auditPayload = createDecisionDossierAuditPayload(decisionDossier);
+  const anchorRequest = createAuditAnchorRequest({
+    auditPayload,
+    network: "testnet",
+  });
+
+  const result = recordAuditAnchorMetadata({
+    decisionDossier,
+    anchorRequest,
+    chainMetadata: {
+      network: "testnet",
+    },
+    now: "2026-06-10T00:08:00.000Z",
+    createAuditAnchorId: () => "anchor_dry_run_1",
+  });
+
+  assert.deepEqual(result.auditAnchor, {
+    id: "anchor_dry_run_1",
+    decisionRunId: "run_1",
+    network: "testnet",
+    contentHash: anchorRequest.contentHash,
+    anchoredAt: "2026-06-10T00:08:00.000Z",
+  });
+  assert.equal("transactionHash" in result.auditAnchor, false);
+  assert.deepEqual(result.decisionDossier.auditAnchors, [result.auditAnchor]);
+});
