@@ -7,6 +7,7 @@ import type {
   DecisionDossier,
   IsoTimestamp,
 } from "./domain.js";
+import { appendTimelineEntry } from "./decision-timeline.js";
 
 export type AuditAnchorNetwork = "testnet";
 
@@ -98,7 +99,12 @@ export function recordAuditAnchorMetadata(
         status: "AUDIT_ANCHOR_WRITTEN",
       },
       auditAnchors: [...input.decisionDossier.auditAnchors, auditAnchor],
-      timeline: [...input.decisionDossier.timeline, "audit_anchor_written"],
+      timeline: appendTimelineEntry({
+        timeline: input.decisionDossier.timeline,
+        state: "audit_anchor_written",
+        at: input.now,
+        refs: [auditAnchor.id],
+      }),
     },
   };
 }

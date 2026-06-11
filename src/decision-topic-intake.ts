@@ -1,9 +1,13 @@
 import type {
-  DecisionTimelineState,
+  DecisionTimelineEntry,
   DecisionTopic,
   IsoTimestamp,
   ScreeningOutcome,
 } from "./domain.js";
+import {
+  appendTimelineEntry,
+  createTimelineEntry,
+} from "./decision-timeline.js";
 
 export type CreateDecisionTopicIntakeInput = {
   id: string;
@@ -14,7 +18,7 @@ export type CreateDecisionTopicIntakeInput = {
 
 export type DecisionTopicIntake = {
   topic: DecisionTopic;
-  timeline: readonly DecisionTimelineState[];
+  timeline: readonly DecisionTimelineEntry[];
 };
 
 export type CreateNoScreenedMarketResultInput = {
@@ -28,7 +32,7 @@ export type NoScreenedMarketResult = {
   topic: DecisionTopic;
   screeningOutcome: ScreeningOutcome;
   decisionRun: undefined;
-  timeline: readonly DecisionTimelineState[];
+  timeline: readonly DecisionTimelineEntry[];
 };
 
 export function createDecisionTopicIntake(
@@ -41,7 +45,11 @@ export function createDecisionTopicIntake(
       submittedBy: input.submittedBy,
       receivedAt: input.now,
     },
-    timeline: ["topic_received"],
+    timeline: [
+      createTimelineEntry("topic_received", input.now, {
+        refs: [input.id],
+      }),
+    ],
   };
 }
 
@@ -59,10 +67,15 @@ export function createNoScreenedMarketResult(
       createdAt: input.now,
     },
     decisionRun: undefined,
-    timeline: [
-      ...input.intake.timeline,
-      "markets_fetched",
-      "candidate_markets_screened",
-    ],
+    timeline: appendTimelineEntry({
+      timeline: appendTimelineEntry({
+        timeline: input.intake.timeline,
+        state: "markets_fetched",
+        at: input.now,
+      }),
+      state: "candidate_markets_screened",
+      at: input.now,
+      summary: input.reason,
+    }),
   };
 }

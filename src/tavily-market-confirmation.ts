@@ -3,11 +3,12 @@ import type {
   CandidateMarketScreeningResult,
   ContextEvidenceItem,
   DecisionRun,
-  DecisionTimelineState,
+  DecisionTimelineEntry,
   IsoTimestamp,
   ScreenedMarket,
   ScreeningOutcome,
 } from "./domain.js";
+import { appendTimelineEntry } from "./decision-timeline.js";
 
 export type TavilyContextItem = {
   url: string;
@@ -39,7 +40,7 @@ export type HighConvictionMarketsConfirmedResult = {
   screenedMarkets: readonly ScreenedMarket[];
   contextEvidenceItems: readonly ContextEvidenceItem[];
   decisionRun: DecisionRun;
-  timeline: readonly DecisionTimelineState[];
+  timeline: readonly DecisionTimelineEntry[];
 };
 
 export type TavilyMarketConfirmationResult =
@@ -94,10 +95,13 @@ export async function confirmScreenedMarketsWithTavily(
         status: "CREATED",
         createdAt: input.now,
       },
-      timeline: [
-        ...input.candidateMarketScreeningResult.timeline,
-        "high_conviction_markets_confirmed",
-      ],
+      timeline: appendTimelineEntry({
+        timeline: input.candidateMarketScreeningResult.timeline,
+        state: "high_conviction_markets_confirmed",
+        at: input.now,
+        summary: `${screenedMarkets.length} screened market(s) confirmed.`,
+        refs: screenedMarkets.map((market) => market.id),
+      }),
     };
   }
 

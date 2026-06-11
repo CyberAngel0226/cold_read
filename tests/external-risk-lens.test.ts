@@ -13,6 +13,7 @@ import {
   type EvidenceSnapshot,
   type ExternalRiskRecommendationDraft,
 } from "../src/index.js";
+import { timelineEntries } from "./helpers.js";
 
 const evidenceSnapshot: EvidenceSnapshot = {
   id: "snapshot_1",
@@ -84,11 +85,11 @@ const candidateMarketScreeningResult: CandidateMarketScreeningResult = {
   screenedAt: "2026-06-10T00:02:00.000Z",
   candidateMarkets: [candidateMarket],
   rejectedMarkets: [],
-  timeline: [
+  timeline: timelineEntries([
     "topic_received",
     "markets_fetched",
     "candidate_markets_screened",
-  ],
+  ]),
 };
 
 const topic: DecisionTopic = {

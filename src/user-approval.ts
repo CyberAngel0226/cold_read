@@ -6,6 +6,7 @@ import type {
   UserApproval,
   WalletActionProposal,
 } from "./domain.js";
+import { appendTimelineEntry } from "./decision-timeline.js";
 
 export type UserApprovalView =
   | {
@@ -73,11 +74,17 @@ export function recordUserApproval(
       },
       userApproval,
       executionRecord,
-      timeline: [
-        ...input.decisionDossier.timeline,
-        "user_approval_recorded",
-        "execution_record_created",
-      ],
+      timeline: appendTimelineEntry({
+        timeline: appendTimelineEntry({
+          timeline: input.decisionDossier.timeline,
+          state: "user_approval_recorded",
+          at: input.now,
+          refs: [userApproval.id],
+        }),
+        state: "execution_record_created",
+        at: input.now,
+        refs: [executionRecord.id],
+      }),
     },
   };
 }

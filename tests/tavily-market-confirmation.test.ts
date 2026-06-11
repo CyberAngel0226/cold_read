@@ -6,6 +6,7 @@ import {
   type CandidateMarket,
   type CandidateMarketScreeningResult,
 } from "../src/index.js";
+import { timelineEntries, timelineStates } from "./helpers.js";
 
 const candidateMarket: CandidateMarket = {
   id: "candidate_poly_1",
@@ -34,11 +35,11 @@ const noCandidateMarkets: CandidateMarketScreeningResult = {
   screenedAt: "2026-06-10T00:02:00.000Z",
   candidateMarkets: [],
   rejectedMarkets: [],
-  timeline: [
+  timeline: timelineEntries([
     "topic_received",
     "markets_fetched",
     "candidate_markets_screened",
-  ],
+  ]),
 };
 
 const candidateMarketScreeningResult: CandidateMarketScreeningResult = {
@@ -100,7 +101,7 @@ test("Tavily context confirms Candidate Markets into Screened Markets and create
 
   assert.deepEqual(queriedMarketIds, ["candidate_poly_1"]);
   assert.equal(result.kind, "high_conviction_markets_confirmed");
-  assert.deepEqual(result.timeline, [
+  assert.deepEqual(timelineStates(result.timeline), [
     "topic_received",
     "markets_fetched",
     "candidate_markets_screened",

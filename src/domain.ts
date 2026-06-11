@@ -12,6 +12,13 @@ export type DecisionTimelineState =
   | "user_approval_recorded"
   | "execution_record_created";
 
+export type DecisionTimelineEntry = {
+  state: DecisionTimelineState;
+  at: IsoTimestamp;
+  summary?: string;
+  refs?: readonly string[];
+};
+
 export type AnalysisLens = "MARKET_STRUCTURE" | "EXTERNAL_RISK";
 
 export type ConfidenceLevel = "LOW" | "MEDIUM" | "HIGH";
@@ -82,7 +89,7 @@ export type CandidateMarketScreeningResult = {
   screenedAt: IsoTimestamp;
   candidateMarkets: readonly CandidateMarket[];
   rejectedMarkets: readonly MarketRejection[];
-  timeline: readonly DecisionTimelineState[];
+  timeline: readonly DecisionTimelineEntry[];
 };
 
 export type ScreenedMarket = {
@@ -254,5 +261,5 @@ export type DecisionDossier = {
   auditAnchors: readonly AuditAnchor[];
   userApproval?: UserApproval;
   executionRecord?: ExecutionRecord;
-  timeline: readonly DecisionTimelineState[];
+  timeline: readonly DecisionTimelineEntry[];
 };
