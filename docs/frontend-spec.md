@@ -342,3 +342,91 @@ Vue 组件渲染
 | 成功 | `#4ADE80` | timeline ✅ |
 | 警告 | `#FBBF24` | veto/等待 |
 | 错误 | `#F87171` | 拒绝/失败 |
+
+---
+
+## 9. V2 预留：用户策略配置入口
+
+> 此章节标记 v2 扩展点，MVP 不做实现，但架构上预留接口。
+
+### 9.1 哪里加
+
+**决策详情页**——在最终决策卡片和审计信息之间，预留一个「策略」区域：
+
+```
+┌──────────────────────────────────────────────┐
+│  ──── 最终决策 ────                            │
+│  🟢 BUY_YES_SMALL · $5 USDC                  │
+│  [ ✅ 批准执行 ]                               │
+│                                              │
+│  ──── 投资策略 ────            ← v2 新加 🚧    │
+│  ┌────────────────────────────────────────┐  │
+│  │ ⚙️ 当前策略: 默认（保守型）            │  │
+│  │   风险承受: 低  ·  偏好HOLD            │  │
+│  │   [ 调整策略 → ]                       │  │
+│  └────────────────────────────────────────┘  │
+│                                              │
+│  ──── Audit ────                              │
+│  Dossier: 8fa3da35...                         │
+└──────────────────────────────────────────────┘
+```
+
+**或者主页右上角**——放一个「策略管理」入口：
+
+```
+┌──────────────────────────────────────────────┐
+│  🏠 ColdRead              ⚙️ 策略  ⚡ 新建    │
+├──────────────────────────────────────────────┤
+```
+
+### 9.2 策略配置页（v2 路由）
+
+| 路径 | 页面 |
+|---|---|
+| `/settings/strategy` | 策略配置页 |
+| `/settings/strategy/new` | 新建自定义策略 |
+
+### 9.3 策略模型（前端预留类型）
+
+```ts
+// v2 时实现，MVP 只保留类型定义
+type UserStrategy = {
+  id: string;
+  name: string;               // "保守型" / "激进型" / "自定义"
+  riskTolerance: "LOW" | "MEDIUM" | "HIGH";
+  lensWeights: {
+    MARKET_STRUCTURE: number;  // 0-100
+    EXTERNAL_RISK: number;     // 0-100
+  };
+  vetoOverrides: {
+    ignoreInsufficientLiquidity?: boolean;
+    ignoreTooNearResolution?: boolean;
+    ignoreUnclearResolutionRules?: boolean;
+  };
+  actionPreference: "BUY_FIRST" | "HOLD_FIRST";
+  maxStakePerDecision: string; // "$5.00"
+};
+```
+
+### 9.4 MVP 架构预留
+
+| 层 | MVP 做法 | v2 改法 |
+|---|---|---|
+| 路由 | 不加策略路由 | 加 `/settings/strategy` |
+| 详情页 | 没有策略区域 | 在决策卡片和审计之间插入策略卡片 |
+| `domain.ts` | 不加 `UserStrategy` 类型 | 加策略类型 + 默认值 |
+| `decision-scorer.ts` | 硬编码规则 | 从策略配置读取权重/Veto开关 |
+| 存储 | 存 localStorage | 存链上（Issue #47） |
+
+### 9.5 前端代码预留方式
+
+在 `src/` 下创建一个空占位文件：
+
+```ts
+// src/user-strategy.ts
+// v2: User strategy configuration
+// Placeholder — see docs/frontend-spec.md §9
+export type UserStrategy = Record<string, never>;
+```
+
+这样以后改 `domain.ts` 里的类型时，不会忘记还有策略这个依赖点。
