@@ -138,9 +138,12 @@ function selectRecommendation(
     throw new Error("Final Decision requires at least one Agent Recommendation.");
   }
 
-  return [...recommendations].sort(
-    (left, right) => recommendationScore(right) - recommendationScore(left),
-  )[0];
+  return recommendations.reduce((selected, recommendation) => {
+    if (recommendationScore(recommendation) > recommendationScore(selected)) {
+      return recommendation;
+    }
+    return selected;
+  });
 }
 
 function recommendationScore(recommendation: AgentRecommendation): number {
