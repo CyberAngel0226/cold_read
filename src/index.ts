@@ -9,3 +9,4 @@ export * from "./external-risk-lens.js";
 export * from "./decision-scorer.js";
 export * from "./decision-dossier-audit.js";
 export * from "./audit-anchor.js";
+export * from "./user-approval.js";
