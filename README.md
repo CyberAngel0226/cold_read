@@ -88,6 +88,7 @@ The Hackathon live proof path is planned around:
 ```bash
 npm run demo:live -- --market <polymarket-market-slug-or-id>
 npm run demo:trace -- --market <polymarket-market-slug-or-id>
+npm run demo:anchor -- --hash <sha256-dossier-or-trace-hash>
 ```
 
 `demo:live` reads real Polymarket market evidence and prints the normalized evidence packet with source identifiers preserved.
@@ -95,6 +96,14 @@ npm run demo:trace -- --market <polymarket-market-slug-or-id>
 `demo:trace` reads the same live market evidence, then generates or loads a GLM-5.1 Agent Run Trace. It prints `glmTraceHash`, the stable audit hash for the trace material. When `ZAI_API_KEY` is missing or the model response is malformed, the command falls back to the committed cached trace at `demo/glm-agent-run-trace.json` and reports the fallback reason.
 
 Both commands accept a Polymarket market slug, market id, or condition id. These steps do not require a wallet and do not place trades.
+
+`demo:anchor` prepares a Sepolia 0 ETH calldata Audit Anchor transaction for a dossier or trace hash. It dry-runs by default and prints the target address, calldata, and pending Sepolia Etherscan URL shape. Add `--send` only when `SEPOLIA_RPC_URL`, `SEPOLIA_PRIVATE_KEY`, and `SEPOLIA_ANCHOR_TO` point to a funded demo wallet:
+
+```bash
+npm run demo:anchor -- --hash <sha256-dossier-or-trace-hash> --send
+```
+
+If `--hash` is omitted, `demo:anchor` uses the committed demo dossier anchor hash derived from the cached GLM-5.1 Agent Run Trace.
 
 ## Environment Variables
 
@@ -110,9 +119,9 @@ SEPOLIA_ANCHOR_TO=<address that receives the 0 ETH calldata transaction>
 Safety notes:
 
 - Use a demo wallet only.
-- Keep only small test funds in the Sepolia wallet.
+- Keep only small test funds in the Sepolia wallet; the demo transaction sends 0 ETH but still pays gas.
 - Never commit private keys.
-- The Sepolia sender should dry-run by default and send only when explicitly requested.
+- The Sepolia sender dry-runs by default and sends only with `--send`.
 
 ## Demo narrative
 
