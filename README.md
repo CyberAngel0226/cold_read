@@ -119,7 +119,18 @@ npm run demo:anchor -- --send --pretty
 npm run demo:agent -- --market <polymarket-market-slug-or-id> --pretty
 npm run demo:agent -- --market <polymarket-market-slug-or-id> --require-live --pretty
 npm run demo:agent -- --market <polymarket-market-slug-or-id> --send-anchor --pretty
+npm run demo:agent -- --market <polymarket-market-slug-or-id> --require-live --send-anchor --pretty --no-wait
 ```
+
+### Flags
+
+| Flag | Required | Description |
+|------|----------|-------------|
+| `--market <slug>` | Yes | Polymarket market slug, market id, or condition id to audit. |
+| `--require-live` | No | Force live GLM-5.1 call; disables cached trace fallback. Without it, the agent falls back to `demo/agent-run-record.cached.json` when `ZAI_API_KEY` is missing or the live call fails. |
+| `--send-anchor` | No | Send a real 0 ETH Sepolia Audit Anchor transaction. Without it, the agent dry-runs the anchor and prints the calldata without broadcasting. Requires `SEPOLIA_RPC_URL`, `SEPOLIA_PRIVATE_KEY`, and `SEPOLIA_ANCHOR_TO`. |
+| `--pretty` | No | Enable the bilingual Chinese / English styled output with box framing and task pipeline display. Without it, the default CLI mode runs interactively (when stdin is a TTY). |
+| `--no-wait` | No | Skip the "press Enter to exit" prompt on failure when `--pretty` mode is active. Only meaningful with `--pretty`. |
 
 When `ZAI_API_KEY` is configured, `demo:agent` attempts a live GLM-5.1 planner call. Without a key, or if the live call fails, it falls back to an explicitly labeled cached replay unless `--require-live` is set. `--send-anchor` is the only mode that sends a real Sepolia transaction.
 
