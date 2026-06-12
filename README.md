@@ -91,6 +91,8 @@ npm run demo:live -- --market <polymarket-market-slug-or-id>
 
 The command is intended to read real Polymarket market evidence, generate or load a GLM-5.1 Agent Run Trace, produce a Decision Dossier hash, and optionally write a Sepolia 0 ETH calldata Audit Anchor transaction.
 
+For the first live proof slice, `--market` accepts a Polymarket market slug, market id, or condition id and prints normalized market evidence with source identifiers preserved. This step does not require a wallet and does not place trades.
+
 ## Environment Variables
 
 ```text
