@@ -92,7 +92,7 @@ npm run demo:trace -- --market <polymarket-market-slug-or-id>
 
 `demo:live` reads real Polymarket market evidence and prints the normalized evidence packet with source identifiers preserved.
 
-`demo:trace` reads the same live market evidence, then generates or loads a GLM-5.1 Agent Run Trace. When `ZAI_API_KEY` is missing or the model response is malformed, the command falls back to the committed cached trace at `demo/glm-agent-run-trace.json` and reports the fallback reason.
+`demo:trace` reads the same live market evidence, then generates or loads a GLM-5.1 Agent Run Trace. It prints `glmTraceHash`, the stable audit hash for the trace material. When `ZAI_API_KEY` is missing or the model response is malformed, the command falls back to the committed cached trace at `demo/glm-agent-run-trace.json` and reports the fallback reason.
 
 Both commands accept a Polymarket market slug, market id, or condition id. These steps do not require a wallet and do not place trades.
 
