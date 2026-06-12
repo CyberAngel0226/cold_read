@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "npm run typecheck && tsc -p tsconfig.test.json && node .tmp/test-build/tests/decision-topic-intake.test.js && node .tmp/test-build/tests/polymarket-market-fetch.test.js"
+    "test": "npm run typecheck && tsc -p tsconfig.test.json && node .tmp/test-build/tests/decision-topic-intake.test.js && node .tmp/test-build/tests/polymarket-market-fetch.test.js && node .tmp/test-build/tests/candidate-market-screener.test.js && node .tmp/test-build/tests/tavily-market-confirmation.test.js && node .tmp/test-build/tests/evidence-snapshot.test.js && node .tmp/test-build/tests/market-structure-lens.test.js && node .tmp/test-build/tests/external-risk-lens.test.js && node .tmp/test-build/tests/decision-scorer.test.js && node .tmp/test-build/tests/decision-dossier-audit.test.js && node .tmp/test-build/tests/audit-anchor.test.js && node .tmp/test-build/tests/user-approval.test.js && node .tmp/test-build/tests/pipeline.test.js && python -B -m unittest tests/market_structure_lens_reader_test.py && python -B -m unittest tests/external_risk_lens_reader_test.py && python -B -m unittest tests/decision_scorer_reader_test.py && python -B -m unittest tests/audit_anchor_sender_test.py"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",

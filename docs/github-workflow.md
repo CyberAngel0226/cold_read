@@ -137,3 +137,10 @@ When a Codex agent starts work:
 9. Report branch, commit hash, tests, and any push or network failure.
 
 When the user asks for "next issue", assume the base branch is `dev` unless they explicitly say otherwise.
+
+## Domain Boundary Notes
+
+- `FetchedPolymarketMarket` is external Polymarket material, not a ColdRead domain market.
+- Only the Market Screener should turn fetched material into `CandidateMarket` or `MarketRejection`.
+- Only Tavily-backed context confirmation should turn Candidate Markets into `ScreenedMarket` / High-Conviction Market.
+- Analysis Agents and the Decision Scorer should work from an `EvidenceSnapshot`, not from raw fetch responses.

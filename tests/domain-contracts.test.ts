@@ -1,6 +1,8 @@
 import type {
   AgentRecommendation,
   AuditAnchor,
+  CandidateMarket,
+  CandidateMarketScreeningResult,
   DecisionDossier,
   DecisionRun,
   DecisionTopic,
@@ -8,16 +10,21 @@ import type {
   EvidenceSnapshot,
   ExecutionRecord,
   FinalDecision,
+  MarketRejection,
   RecommendationAction,
   ScreenedMarket,
   ScreeningOutcome,
   UserApproval,
 } from "../src/domain.js";
-import type { DecisionDossier as PublicDecisionDossier } from "../src/index.js";
+import { createTimelineEntry } from "../src/index.js";
+import type {
+  DecisionDossier as PublicDecisionDossier,
+  FetchedPolymarketMarket,
+} from "../src/index.js";
 
 const allowedAction: RecommendationAction = "BUY_YES_SMALL";
 
-const fullMvpTimeline: DecisionTimelineState[] = [
+const fullMvpTimelineStates: DecisionTimelineState[] = [
   "topic_received",
   "markets_fetched",
   "candidate_markets_screened",
@@ -29,6 +36,10 @@ const fullMvpTimeline: DecisionTimelineState[] = [
   "user_approval_recorded",
   "execution_record_created",
 ];
+
+const fullMvpTimeline = fullMvpTimelineStates.map((state) =>
+  createTimelineEntry(state, "2026-06-10T00:00:00.000Z"),
+);
 
 const holdRecommendation: AgentRecommendation = {
   id: "rec_1",
@@ -85,6 +96,7 @@ const noMarketOutcome: ScreeningOutcome = {
 
 const screenedMarket: ScreenedMarket = {
   id: "market_1",
+  sourceCandidateMarketId: "candidate_1",
   polymarketId: "poly_1",
   question: "Will the Fed cut rates at the next meeting?",
   outcomes: ["YES", "NO"],
@@ -103,6 +115,77 @@ const screenedMarket: ScreenedMarket = {
   },
   confirmationRationale: "Rules and context are clear enough for MVP analysis.",
 };
+
+const candidateMarket: CandidateMarket = {
+  id: "candidate_1",
+  sourceMarketId: "market_1",
+  question: "Will the Fed cut rates at the next meeting?",
+  outcomes: ["YES", "NO"],
+  prices: {
+    yes: 0.92,
+    no: 0.08,
+  },
+  volume: 100000,
+  liquidity: 25000,
+  closeTime: "2026-07-10T00:00:00.000Z",
+  resolutionRules: "Resolves YES if the Fed cuts rates at the next meeting.",
+  oneSidedSignal: {
+    side: "YES",
+    price: 0.92,
+    rationale: "YES price is strongly one-sided.",
+  },
+  screeningRationale: "Polymarket-only gates passed.",
+};
+
+// @ts-expect-error Candidate Markets are not Tavily-confirmed Screened Markets.
+const candidateAsScreenedMarket: ScreenedMarket = candidateMarket;
+
+const marketRejection: MarketRejection = {
+  sourceMarketId: "market_2",
+  reason: "LOW_LIQUIDITY",
+  message: "Liquidity cannot support a Small Stake.",
+  rejectedAt: "2026-06-10T00:02:00.000Z",
+};
+
+const candidateMarketScreeningResult: CandidateMarketScreeningResult = {
+  kind: "candidate_markets_screened",
+  topicId: "topic_1",
+  screenedAt: "2026-06-10T00:02:00.000Z",
+  candidateMarkets: [candidateMarket],
+  rejectedMarkets: [marketRejection],
+  timeline: ([
+    "topic_received",
+    "markets_fetched",
+    "candidate_markets_screened",
+  ] satisfies DecisionTimelineState[]).map((state) =>
+    createTimelineEntry(state, "2026-06-10T00:00:00.000Z"),
+  ),
+};
+
+const fetchedPolymarketMarket: FetchedPolymarketMarket = {
+  id: "poly_1",
+  conditionId: "0xabc",
+  question: "Will the Fed cut rates at the next meeting?",
+  outcomes: ["YES", "NO"],
+  prices: {
+    YES: 0.92,
+    NO: 0.08,
+  },
+  status: "active",
+  volume: 100000,
+  liquidity: 25000,
+  closeTime: "2026-07-10T00:00:00.000Z",
+  resolutionRules: "Resolves YES if the Fed cuts rates at the next meeting.",
+  raw: {
+    id: "poly_1",
+  },
+};
+
+// @ts-expect-error Fetched Polymarket material must pass through Market Screener first.
+const fetchedAsCandidateMarket: CandidateMarket = fetchedPolymarketMarket;
+
+// @ts-expect-error Fetched Polymarket material is not a Tavily-confirmed Screened Market.
+const fetchedAsScreenedMarket: ScreenedMarket = fetchedPolymarketMarket;
 
 const decisionRun: DecisionRun = {
   kind: "decision_run",
@@ -221,11 +304,19 @@ const malformedHoldRecommendation: AgentRecommendation = {
 };
 
 void allowedAction;
+void fullMvpTimelineStates;
 void fullMvpTimeline;
 void holdRecommendation;
 void buyYesRecommendation;
 void decisionTopic;
 void noMarketOutcome;
+void candidateMarket;
+void candidateAsScreenedMarket;
+void marketRejection;
+void candidateMarketScreeningResult;
+void fetchedPolymarketMarket;
+void fetchedAsCandidateMarket;
+void fetchedAsScreenedMarket;
 void decisionRun;
 void evidenceSnapshot;
 void finalDecision;

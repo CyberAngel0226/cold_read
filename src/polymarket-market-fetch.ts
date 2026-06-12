@@ -1,7 +1,8 @@
 import type {
-  DecisionTimelineState,
+  DecisionTimelineEntry,
   IsoTimestamp,
 } from "./domain.js";
+import { appendTimelineEntry } from "./decision-timeline.js";
 import type { DecisionTopicIntake } from "./decision-topic-intake.js";
 
 export type PolymarketFetchResponse = {
@@ -41,7 +42,7 @@ export type PolymarketMarketsFetched = {
   topicId: string;
   fetchedAt: IsoTimestamp;
   markets: readonly FetchedPolymarketMarket[];
-  timeline: readonly DecisionTimelineState[];
+  timeline: readonly DecisionTimelineEntry[];
 };
 
 export type PolymarketMarketFetchFailed = {
@@ -50,7 +51,7 @@ export type PolymarketMarketFetchFailed = {
   failedAt: IsoTimestamp;
   status?: number;
   message: string;
-  timeline: readonly DecisionTimelineState[];
+  timeline: readonly DecisionTimelineEntry[];
 };
 
 export type PolymarketMarketFetchResult =
@@ -83,7 +84,12 @@ export async function fetchPolymarketMarketsForTopic(
       topicId: input.intake.topic.id,
       fetchedAt: input.now,
       markets,
-      timeline: [...input.intake.timeline, "markets_fetched"],
+      timeline: appendTimelineEntry({
+        timeline: input.intake.timeline,
+        state: "markets_fetched",
+        at: input.now,
+        summary: `Fetched ${markets.length} Polymarket market(s).`,
+      }),
     };
   } catch (error) {
     return marketFetchFailed(input, error instanceof Error ? error.message : "Polymarket request failed.");

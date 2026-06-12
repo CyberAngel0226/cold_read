@@ -12,6 +12,13 @@ export type DecisionTimelineState =
   | "user_approval_recorded"
   | "execution_record_created";
 
+export type DecisionTimelineEntry = {
+  state: DecisionTimelineState;
+  at: IsoTimestamp;
+  summary?: string;
+  refs?: readonly string[];
+};
+
 export type AnalysisLens = "MARKET_STRUCTURE" | "EXTERNAL_RISK";
 
 export type ConfidenceLevel = "LOW" | "MEDIUM" | "HIGH";
@@ -42,8 +49,52 @@ export type OneSidedSignal = {
   rationale: string;
 };
 
+export type CandidateMarket = {
+  id: string;
+  sourceMarketId: string;
+  question: string;
+  outcomes: readonly ["YES", "NO"];
+  prices: {
+    yes: number;
+    no: number;
+  };
+  volume: number;
+  liquidity: number;
+  closeTime: IsoTimestamp;
+  resolutionRules: string;
+  oneSidedSignal: OneSidedSignal;
+  screeningRationale: string;
+};
+
+export type MarketRejectionReason =
+  | "CLOSED_OR_PAUSED"
+  | "NON_YES_NO_OUTCOMES"
+  | "UNCLEAR_RESOLUTION_RULES"
+  | "LOW_LIQUIDITY"
+  | "TOO_NEAR_RESOLUTION"
+  | "COMPLEX_MULTI_RESULT_MARKET"
+  | "NO_ONE_SIDED_SIGNAL"
+  | "SPECIALIZED_KNOWLEDGE_REQUIRED";
+
+export type MarketRejection = {
+  sourceMarketId: string;
+  reason: MarketRejectionReason;
+  message: string;
+  rejectedAt: IsoTimestamp;
+};
+
+export type CandidateMarketScreeningResult = {
+  kind: "candidate_markets_screened";
+  topicId: string;
+  screenedAt: IsoTimestamp;
+  candidateMarkets: readonly CandidateMarket[];
+  rejectedMarkets: readonly MarketRejection[];
+  timeline: readonly DecisionTimelineEntry[];
+};
+
 export type ScreenedMarket = {
   id: string;
+  sourceCandidateMarketId: string;
   polymarketId: string;
   question: string;
   outcomes: readonly ["YES", "NO"];
@@ -210,5 +261,5 @@ export type DecisionDossier = {
   auditAnchors: readonly AuditAnchor[];
   userApproval?: UserApproval;
   executionRecord?: ExecutionRecord;
-  timeline: readonly DecisionTimelineState[];
+  timeline: readonly DecisionTimelineEntry[];
 };
