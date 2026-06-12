@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import {
   Activity,
   Bell,
@@ -8,17 +8,25 @@ import {
   Plus,
   ShieldCheck,
 } from "@lucide/vue";
-import { RouterLink } from "vue-router";
+import { RouterLink, useRouter } from "vue-router";
 import {
-  decisionRuns,
   monitoredMarkets,
   strategyParameters,
   systemStatuses,
   type DecisionRunCard,
 } from "../data/mockData.js";
-import { ref } from "vue";
+import { computed, ref } from "vue";
+import {
+  loadDecisionRunCards,
+  submitDecisionTopic,
+} from "../api/decisionRuns.js";
 
 const toast = ref("");
+const router = useRouter();
+const topicText = ref("Fed rate cut");
+const isSubmitting = ref(false);
+const submittedRunCards = ref(loadDecisionRunCards());
+const runCards = computed(() => submittedRunCards.value);
 
 const metricCards = [
   { value: "18", label: "今日获取盘口", tone: "chain" },
@@ -43,6 +51,25 @@ function chipClass(run: DecisionRunCard, chip: string): string {
   if (run.riskLevel === "MEDIUM" && chip === "MEDIUM") return "chip chip-medium";
   return "chip";
 }
+
+async function runDecisionTopic(): Promise<void> {
+  if (topicText.value.trim() === "") {
+    previewNotice("请输入 Decision Topic（决策主题）。");
+    return;
+  }
+
+  isSubmitting.value = true;
+  const result = await submitDecisionTopic(topicText.value);
+  isSubmitting.value = false;
+
+  if (result.kind === "decision_run_complete") {
+    submittedRunCards.value = loadDecisionRunCards();
+    await router.push(`/runs/${result.detail.id}`);
+    return;
+  }
+
+  previewNotice(result.message);
+}
 </script>
 
 <template>
@@ -58,7 +85,7 @@ function chipClass(run: DecisionRunCard, chip: string): string {
         <a>策略参数</a>
         <a>审计</a>
       </nav>
-      <button class="primary-action" type="button">
+      <button class="primary-action" type="button" :disabled="isSubmitting" @click="runDecisionTopic">
         <Plus :size="16" />
         新建 Decision Topic
       </button>
@@ -77,6 +104,7 @@ function chipClass(run: DecisionRunCard, chip: string): string {
               <h2 id="system-status-title">系统级状态</h2>
             </div>
             <ShieldCheck :size="20" class="muted-icon" />
+            
           </div>
           <div class="system-status-grid">
             <button
@@ -105,6 +133,22 @@ function chipClass(run: DecisionRunCard, chip: string): string {
               正在运行 External Risk Lens。下一步将选择 Final Decision；本次运行不会自动触发钱包执行。
             </p>
           </div>
+          <form class="topic-form" @submit.prevent="runDecisionTopic">
+            <label for="topic-input-main">Decision Topic（决策主题）</label>
+            <div class="topic-form-row">
+              <input
+                id="topic-input-main"
+                v-model="topicText"
+                type="text"
+                placeholder="例如：Fed rate cut"
+                :disabled="isSubmitting"
+              />
+              <button class="primary-action" type="submit" :disabled="isSubmitting">
+                {{ isSubmitting ? "运行中..." : "运行" }}
+              </button>
+            </div>
+            <small>输入 “no screened market” 可验证 Screening Outcome（筛选结果）路径。</small>
+          </form>
           <div class="stage-strip" aria-label="Current Decision Run stage">
             <div
               v-for="(stage, index) in ['收到主题', '获取盘口', '筛选与确认', '冻结证据', 'Agent 建议', '最终决策', '审计锚定', '确认与执行']"
@@ -138,7 +182,7 @@ function chipClass(run: DecisionRunCard, chip: string): string {
             <p class="subtle">卡片流 · 非事件日志</p>
           </div>
           <RouterLink
-            v-for="run in decisionRuns"
+            v-for="run in runCards"
             :key="run.id"
             class="run-card"
             :to="`/runs/${run.id}`"

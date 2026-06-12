@@ -256,6 +256,39 @@ h2 {
   line-height: 1.45;
 }
 
+.topic-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.topic-form label,
+.topic-form small {
+  color: var(--foreground-muted);
+  font-size: 12px;
+}
+
+.topic-form-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.topic-form input {
+  min-width: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--foreground-primary);
+  font: inherit;
+  padding: 11px 12px;
+}
+
+.topic-form input:focus {
+  border-color: var(--accent-primary);
+  outline: none;
+}
+
 .stage-strip {
   gap: 8px;
 }

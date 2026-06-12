@@ -12,15 +12,14 @@ import { RouterLink, useRoute } from "vue-router";
 import {
   auditJson,
   auditSummary,
-  decisionRunDetail,
 } from "../data/mockData.js";
+import { loadDecisionRunDetail } from "../api/decisionRuns.js";
 
 const route = useRoute();
 const toast = ref("");
 
 const run = computed(() => ({
-  ...decisionRunDetail,
-  id: typeof route.params.runId === "string" ? route.params.runId : decisionRunDetail.id,
+  ...loadDecisionRunDetail(typeof route.params.runId === "string" ? route.params.runId : "run_1"),
 }));
 
 async function copyText(label: string, text: string): Promise<void> {
