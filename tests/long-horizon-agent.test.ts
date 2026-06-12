@@ -3,8 +3,8 @@ import test from "node:test";
 
 import {
   formatLongHorizonAgentPrettyOutput,
-  runLongHorizonAuditAgent,
   runLongHorizonAgentCli,
+  runLongHorizonAuditAgent,
 } from "../src/long-horizon-agent.js";
 
 const market = "new-rhianna-album-before-gta-vi-926";
@@ -23,7 +23,7 @@ test("cached replay produces a long-horizon Agent Run Record with validation rep
   assert.equal(result.record.engine, "GLM-5.1");
   assert.equal(result.record.mode, "cached_replay");
   assert.equal(result.record.market, market);
-  assert.equal(result.record.steps.length >= 6, true);
+  assert.equal(result.record.steps.length, 6);
   assert.equal(
     result.record.steps.some((step) => step.status === "failed" && step.toolCall?.name === "validate_agent_trace"),
     true,
@@ -76,8 +76,8 @@ test("require-live failure in pretty interactive mode waits for Enter", async ()
   assert.match(result.stdout, /按 Enter 退出 \/ Press Enter to exit/);
 });
 
-test("live mode calls GLM-5.1 planner before completing the agent run", async () => {
-  let plannerCalls = 0;
+test("live mode calls GLM-5.1 planner across the bounded multi-step run", async () => {
+  const plannerCalls: number[] = [];
   const result = await runLongHorizonAuditAgent({
     market,
     env: {
@@ -86,19 +86,20 @@ test("live mode calls GLM-5.1 planner before completing the agent run", async ()
     },
     now: new Date("2026-06-13T00:00:00.000Z"),
     plannerClient: async (request) => {
-      plannerCalls += 1;
+      plannerCalls.push(request.stepIndex);
       assert.equal(request.model, "glm-5.1");
       assert.equal(request.market, market);
       return {
-        planSummary: "Inspect market, validate trace, repair evidence gaps, then prepare an anchor.",
+        actionSummary: `GLM chooses ${request.expectedTool} for step ${request.stepIndex}.`,
       };
     },
   });
 
   assert.equal(result.kind, "agent_run_completed");
-  assert.equal(plannerCalls, 1);
+  assert.deepEqual(plannerCalls, [1, 2, 3, 4, 5, 6]);
   assert.equal(result.record.mode, "live");
-  assert.match(result.record.steps[0].observation, /Inspect market/);
+  assert.match(result.record.steps[0].modelAction.summary, /plan_task/);
+  assert.match(result.record.steps[5].modelAction.summary, /prepare_sepolia_anchor/);
 });
 
 test("live mode falls back transparently to cached replay when GLM call fails", async () => {

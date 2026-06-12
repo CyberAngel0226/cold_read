@@ -76,7 +76,7 @@ test("dry-run can use the committed demo dossier hash when no hash is provided",
   assert.equal(result.calldata, `0x${demoDossierHash()}`);
 });
 
-test("pretty output renders bilingual labels and full verifiable dry-run fields", async () => {
+test("pretty output renders bilingual labels and full verifiable dry-run fields without implying send", async () => {
   const result = await runSepoliaCalldataAnchor({
     mode: "dry-run",
     hash: dossierHash,
@@ -88,8 +88,10 @@ test("pretty output renders bilingual labels and full verifiable dry-run fields"
   const pretty = formatSepoliaAnchorPrettyOutput(result);
 
   assert.match(pretty, /🧊 ColdRead Sepolia 审计锚点 \/ Audit Anchor/);
-  assert.match(pretty, /✅ 读取锚点哈希 \/ Load anchor hash/);
-  assert.match(pretty, /🟡 当前为 dry-run \/ Dry-run only/);
+  assert.match(pretty, /🧾 已读取锚点哈希 \/ Anchor hash loaded/);
+  assert.match(pretty, /🧱 已构造 0 ETH 交易 \/ 0 ETH transaction prepared/);
+  assert.match(pretty, /🟡 当前为 dry-run，未发送交易 \/ Dry-run only, no transaction sent/);
+  assert.doesNotMatch(pretty, /✅ 已写入 Sepolia \/ Written to Sepolia/);
   assert.match(pretty, /网络 \/ Network: Sepolia/);
   assert.match(pretty, /模式 \/ Mode: DRY_RUN/);
   assert.match(pretty, new RegExp(`目标地址 / To: ${anchorTo}`));

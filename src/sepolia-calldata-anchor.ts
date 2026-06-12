@@ -1,4 +1,4 @@
-import { Wallet, JsonRpcProvider } from "ethers";
+import { JsonRpcProvider, Wallet } from "ethers";
 import { cachedDemoAgentRunTrace } from "./agent-run-trace.js";
 import { hashAuditPayload } from "./decision-dossier-audit.js";
 
@@ -112,13 +112,13 @@ export function formatSepoliaAnchorPrettyOutput(
     "│  AI 决策材料哈希 → 链上 calldata             │",
     "╰────────────────────────────────────────────╯",
     "",
-    "✅ 读取锚点哈希 / Load anchor hash",
-    "✅ 构造 0 ETH 交易 / Build 0 ETH transaction",
+    "🧾 已读取锚点哈希 / Anchor hash loaded",
+    "🧱 已构造 0 ETH 交易 / 0 ETH transaction prepared",
     result.status === "SENT"
       ? "✅ 已写入 Sepolia / Written to Sepolia"
-      : "🟡 当前为 dry-run / Dry-run only",
+      : "🟡 当前为 dry-run，未发送交易 / Dry-run only, no transaction sent",
     "",
-    `网络 / Network: Sepolia`,
+    "网络 / Network: Sepolia",
     `模式 / Mode: ${result.status}`,
     `目标地址 / To: ${result.to}`,
     `锚点哈希 / Anchor Hash: ${result.hash}`,

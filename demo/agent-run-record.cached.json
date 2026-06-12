@@ -2,7 +2,7 @@
   "version": "coldread.long-horizon-agent-run.v1",
   "engine": "GLM-5.1",
   "mode": "cached_replay",
-  "createdAt": "2026-06-12T18:49:49.343Z",
+  "createdAt": "2026-06-12T19:06:51.343Z",
   "market": "new-rhianna-album-before-gta-vi-926",
   "marketEvidence": {
     "id": "540817",
@@ -139,7 +139,7 @@
       "toolCall": {
         "name": "prepare_sepolia_anchor",
         "input": {
-          "traceHash": "22b9e22267900b9065601bf78da64c7dbad34d5c4a7b1d7a116de60a65b16e3b"
+          "traceHash": "a9f5c2127a77dd105ef66421e871718336c285d2f32045e3f70080ff73a3c51f"
         }
       },
       "observation": "已计算 trace hash 并准备 Sepolia calldata anchor。"
@@ -147,7 +147,7 @@
   ],
   "finalTrace": {
     "engine": "GLM-5.1",
-    "generatedAt": "2026-06-12T18:49:49.343Z",
+    "generatedAt": "2026-06-12T19:06:51.343Z",
     "task": {
       "targetMarketId": "new-rhianna-album-before-gta-vi-926",
       "objective": "Analyze a live Polymarket market and draft an auditable lens decision."
@@ -250,13 +250,13 @@
       ]
     }
   },
-  "traceHash": "22b9e22267900b9065601bf78da64c7dbad34d5c4a7b1d7a116de60a65b16e3b",
+  "traceHash": "a9f5c2127a77dd105ef66421e871718336c285d2f32045e3f70080ff73a3c51f",
   "anchor": {
     "status": "DRY_RUN",
     "network": "sepolia",
-    "hash": "22b9e22267900b9065601bf78da64c7dbad34d5c4a7b1d7a116de60a65b16e3b",
+    "hash": "a9f5c2127a77dd105ef66421e871718336c285d2f32045e3f70080ff73a3c51f",
     "to": "0xED3802DDD5E1a700FD2071F32a2c6f5ea9415a51",
-    "calldata": "0x22b9e22267900b9065601bf78da64c7dbad34d5c4a7b1d7a116de60a65b16e3b",
+    "calldata": "0xa9f5c2127a77dd105ef66421e871718336c285d2f32045e3f70080ff73a3c51f",
     "valueEth": "0",
     "explorerLink": "https://sepolia.etherscan.io/tx/<pending>"
   }

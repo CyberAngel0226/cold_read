@@ -1,5 +1,5 @@
-import { createInterface } from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
+import { createInterface } from "node:readline/promises";
 
 import { cachedDemoAgentRunTrace, type AgentRunTrace } from "./agent-run-trace.js";
 import { hashAuditPayload } from "./decision-dossier-audit.js";
@@ -56,6 +56,22 @@ export type LongHorizonAgentRunRecord = {
   anchor: SepoliaCalldataAnchorResult;
 };
 
+export type LongHorizonAgentPlannerRequest = {
+  model: "glm-5.1";
+  market: string;
+  stepIndex: number;
+  expectedTool: LongHorizonAgentToolName;
+  prompt: string;
+};
+
+export type LongHorizonAgentPlannerResult = {
+  actionSummary: string;
+};
+
+export type LongHorizonAgentPlannerClient = (
+  request: LongHorizonAgentPlannerRequest,
+) => Promise<LongHorizonAgentPlannerResult>;
+
 export type RunLongHorizonAuditAgentInput = {
   market: string;
   env?: SepoliaCalldataAnchorEnv & {
@@ -66,20 +82,6 @@ export type RunLongHorizonAuditAgentInput = {
   now?: Date;
   plannerClient?: LongHorizonAgentPlannerClient;
 };
-
-export type LongHorizonAgentPlannerRequest = {
-  model: "glm-5.1";
-  market: string;
-  prompt: string;
-};
-
-export type LongHorizonAgentPlannerResult = {
-  planSummary: string;
-};
-
-export type LongHorizonAgentPlannerClient = (
-  request: LongHorizonAgentPlannerRequest,
-) => Promise<LongHorizonAgentPlannerResult>;
 
 export type RunLongHorizonAuditAgentResult =
   | {
@@ -127,6 +129,68 @@ const cachedMarketEvidence: LivePolymarketMarketEvidence = {
   },
 };
 
+const stepSpecs: readonly {
+  index: number;
+  titleZh: string;
+  titleEn: string;
+  tool: LongHorizonAgentToolName;
+  observation: string;
+  input: (market: string, traceHash: string) => Record<string, unknown>;
+  status?: LongHorizonAgentStepStatus;
+  repairOfStepId?: string;
+}[] = [
+  {
+    index: 1,
+    titleZh: "任务拆解",
+    titleEn: "Plan task",
+    tool: "plan_task",
+    observation: "GLM-5.1 制定 6 步审计计划。",
+    input: (market) => ({ market }),
+  },
+  {
+    index: 2,
+    titleZh: "读取真实盘口",
+    titleEn: "Fetch live market",
+    tool: "fetch_polymarket_market",
+    observation: "找到真实 Polymarket 市场并保留来源链接。",
+    input: (market) => ({ market }),
+  },
+  {
+    index: 3,
+    titleZh: "生成轨迹草稿",
+    titleEn: "Draft trace",
+    tool: "draft_agent_trace",
+    observation: "GLM-5.1 生成第一版 Agent Run Trace。",
+    input: (market) => ({ market }),
+  },
+  {
+    index: 4,
+    titleZh: "轨迹校验失败",
+    titleEn: "Trace validation failed",
+    tool: "validate_agent_trace",
+    observation: "trace 缺少 externalRiskFlags，工具拒绝进入审计载荷。",
+    input: () => ({ requiredField: "externalRiskFlags" }),
+    status: "failed",
+  },
+  {
+    index: 5,
+    titleZh: "自我修复",
+    titleEn: "Self repair",
+    tool: "repair_agent_trace",
+    observation: "GLM-5.1 补齐风险字段，并将建议降级为 HOLD。",
+    input: () => ({ repair: "externalRiskFlags" }),
+    repairOfStepId: "step-4",
+  },
+  {
+    index: 6,
+    titleZh: "计算哈希并准备锚点",
+    titleEn: "Compute hash and prepare anchor",
+    tool: "prepare_sepolia_anchor",
+    observation: "已计算 trace hash 并准备 Sepolia calldata anchor。",
+    input: (_market, traceHash) => ({ traceHash }),
+  },
+];
+
 export async function runLongHorizonAuditAgent(
   input: RunLongHorizonAuditAgentInput,
 ): Promise<RunLongHorizonAuditAgentResult> {
@@ -140,18 +204,20 @@ export async function runLongHorizonAuditAgent(
 
   let mode: LongHorizonAgentMode = "cached_replay";
   let fallbackReason: string | undefined;
-  let planSummary = "GLM-5.1 制定 6 步审计计划。";
+  const createdAt = (input.now ?? new Date()).toISOString();
+  const finalTrace = traceForMarket(input.market, createdAt);
+  const traceHash = hashAuditPayload(finalTrace);
+  let steps = buildCachedReplaySteps(input.market, traceHash);
 
   if (env.ZAI_API_KEY) {
     const plannerClient = input.plannerClient ?? createZaiPlannerClient(env.ZAI_API_KEY);
     try {
-      const planned = await plannerClient({
-        model: "glm-5.1",
+      steps = await buildLiveSteps({
         market: input.market,
-        prompt: buildPlannerPrompt(input.market),
+        traceHash,
+        plannerClient,
       });
       mode = "live";
-      planSummary = planned.planSummary;
     } catch {
       if (input.requireLive === true) {
         return {
@@ -163,20 +229,6 @@ export async function runLongHorizonAuditAgent(
     }
   }
 
-  const createdAt = (input.now ?? new Date()).toISOString();
-  const finalTrace: AgentRunTrace = {
-    ...cachedDemoAgentRunTrace,
-    generatedAt: createdAt,
-    task: {
-      ...cachedDemoAgentRunTrace.task,
-      targetMarketId: input.market,
-    },
-    finalLensDraft: {
-      ...cachedDemoAgentRunTrace.finalLensDraft,
-      targetMarketId: input.market,
-    },
-  };
-  const traceHash = hashAuditPayload(finalTrace);
   const anchor = await runSepoliaCalldataAnchor({
     mode: input.sendAnchor === true ? "send" : "dry-run",
     hash: traceHash,
@@ -197,7 +249,7 @@ export async function runLongHorizonAuditAgent(
         slug: input.market,
         sourceUrl: `https://polymarket.com/event/${input.market}`,
       },
-      steps: buildCachedReplaySteps(input.market, traceHash, planSummary),
+      steps,
       finalTrace,
       traceHash,
       anchor,
@@ -270,6 +322,9 @@ export function formatLongHorizonAgentPrettyOutput(
     "╰────────────────────────────────────────────────╯",
     "",
     `引擎 / Engine: GLM-5.1 ${record.mode === "live" ? "live" : "cached replay"}`,
+    ...(record.fallbackReason === undefined
+      ? []
+      : [`回退原因 / Fallback Reason: ${record.fallbackReason}`]),
     `市场 / Market: ${record.market}`,
     `锚点模式 / Anchor Mode: ${record.anchor.status}`,
     "",
@@ -305,25 +360,89 @@ export function formatLongHorizonAgentFailure(input: {
   ].join("\n");
 }
 
+async function buildLiveSteps(input: {
+  market: string;
+  traceHash: string;
+  plannerClient: LongHorizonAgentPlannerClient;
+}): Promise<LongHorizonAgentStep[]> {
+  const steps: LongHorizonAgentStep[] = [];
+  for (const spec of stepSpecs) {
+    const planned = await input.plannerClient({
+      model: "glm-5.1",
+      market: input.market,
+      stepIndex: spec.index,
+      expectedTool: spec.tool,
+      prompt: buildPlannerPrompt({
+        market: input.market,
+        spec,
+        previousSteps: steps,
+      }),
+    });
+
+    steps.push(buildStep({
+      market: input.market,
+      traceHash: input.traceHash,
+      spec,
+      modelSummary: planned.actionSummary,
+    }));
+  }
+
+  return steps;
+}
+
 function buildCachedReplaySteps(
   market: string,
   traceHash: string,
-  planSummary: string,
 ): LongHorizonAgentStep[] {
-  return [
-    step(1, "任务拆解", "Plan task", "plan_task", planSummary, { market }),
-    step(2, "读取真实盘口", "Fetch live market", "fetch_polymarket_market", "找到真实 Polymarket 市场并保留来源链接。", { market }),
-    step(3, "生成轨迹草稿", "Draft trace", "draft_agent_trace", "GLM-5.1 生成第一版 Agent Run Trace。", { market }),
-    {
-      ...step(4, "轨迹校验失败", "Trace validation failed", "validate_agent_trace", "trace 缺少 externalRiskFlags，工具拒绝进入审计载荷。", { requiredField: "externalRiskFlags" }),
-      status: "failed",
+  return stepSpecs.map((spec) => buildStep({
+    market,
+    traceHash,
+    spec,
+    modelSummary: `Select ${spec.tool} as the next bounded ColdRead tool.`,
+  }));
+}
+
+function buildStep(input: {
+  market: string;
+  traceHash: string;
+  spec: typeof stepSpecs[number];
+  modelSummary: string;
+}): LongHorizonAgentStep {
+  return {
+    id: `step-${input.spec.index}`,
+    index: input.spec.index,
+    title: `${input.spec.titleZh} / ${input.spec.titleEn}`,
+    titleZh: input.spec.titleZh,
+    titleEn: input.spec.titleEn,
+    status: input.spec.status ?? "completed",
+    modelAction: {
+      summary: input.modelSummary,
+      nextTool: input.spec.tool,
     },
-    {
-      ...step(5, "自我修复", "Self repair", "repair_agent_trace", "GLM-5.1 补齐风险字段，并将建议降级为 HOLD。", { repair: "externalRiskFlags" }),
-      repairOfStepId: "step-4",
+    toolCall: {
+      name: input.spec.tool,
+      input: input.spec.input(input.market, input.traceHash),
     },
-    step(6, "计算哈希并准备锚点", "Compute hash and prepare anchor", "prepare_sepolia_anchor", "已计算 trace hash 并准备 Sepolia calldata anchor。", { traceHash }),
-  ];
+    observation: input.spec.observation,
+    ...(input.spec.repairOfStepId === undefined
+      ? {}
+      : { repairOfStepId: input.spec.repairOfStepId }),
+  };
+}
+
+function traceForMarket(market: string, generatedAt: string): AgentRunTrace {
+  return {
+    ...cachedDemoAgentRunTrace,
+    generatedAt,
+    task: {
+      ...cachedDemoAgentRunTrace.task,
+      targetMarketId: market,
+    },
+    finalLensDraft: {
+      ...cachedDemoAgentRunTrace.finalLensDraft,
+      targetMarketId: market,
+    },
+  };
 }
 
 function createZaiPlannerClient(apiKey: string): LongHorizonAgentPlannerClient {
@@ -351,18 +470,28 @@ function createZaiPlannerClient(apiKey: string): LongHorizonAgentPlannerClient {
 
     const payload = await response.json();
     return {
-      planSummary: extractPlannerContent(payload),
+      actionSummary: extractPlannerContent(payload),
     };
   };
 }
 
-function buildPlannerPrompt(market: string): string {
+function buildPlannerPrompt(input: {
+  market: string;
+  spec: typeof stepSpecs[number];
+  previousSteps: readonly LongHorizonAgentStep[];
+}): string {
   return [
     "You are ColdRead's GLM-5.1 long-horizon Web3 audit agent.",
-    "Plan a bounded six-step task for auditing a Polymarket decision.",
-    "The plan must include tool calls, validation, one repair step, trace hashing, and Sepolia anchor preparation.",
-    "Return a concise plan summary only.",
-    `Market: ${market}`,
+    "Choose and justify exactly the expected next bounded ColdRead tool.",
+    "Keep the action summary concise. Do not invent wallet execution.",
+    `Market: ${input.market}`,
+    `Step: ${input.spec.index}`,
+    `Expected tool: ${input.spec.tool}`,
+    `Previous steps: ${JSON.stringify(input.previousSteps.map((step) => ({
+      index: step.index,
+      tool: step.toolCall?.name,
+      status: step.status,
+    })))}`,
   ].join("\n");
 }
 
@@ -382,33 +511,6 @@ function extractPlannerContent(payload: unknown): string {
   }
 
   return content.trim();
-}
-
-function step(
-  index: number,
-  titleZh: string,
-  titleEn: string,
-  tool: LongHorizonAgentToolName,
-  observation: string,
-  input: Record<string, unknown>,
-): LongHorizonAgentStep {
-  return {
-    id: `step-${index}`,
-    index,
-    title: `${titleZh} / ${titleEn}`,
-    titleZh,
-    titleEn,
-    status: "completed",
-    modelAction: {
-      summary: `Select ${tool} as the next bounded ColdRead tool.`,
-      nextTool: tool,
-    },
-    toolCall: {
-      name: tool,
-      input,
-    },
-    observation,
-  };
 }
 
 function parseFlag(args: readonly string[], flag: string): string | undefined {
