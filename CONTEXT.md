@@ -92,6 +92,14 @@ _Avoid_: Score Penalty, Warning, Low Confidence, 普通扣分
 Agent Recommendation 或 Final Decision 中表达预测市场头寸方向的受控动作词。MVP 限定为 `BUY_YES_SMALL`、`BUY_NO_SMALL` 和 `HOLD`；只有 `BUY_YES_SMALL` 与 `BUY_NO_SMALL` 可以关联钱包动作建议。
 _Avoid_: Free-Text Action, Strategy, Order Type, 操作类型
 
+**Exit Recommendation（退出建议）**:
+系统对既有预测市场头寸提出的人工确认退出建议。它可以说明退出原因和风险变化，但在 V2 中不具备自主执行资格。
+_Avoid_: Auto-Sell, Stop Loss Order, Take Profit Order, 自动卖出
+
+**Position Record（持仓记录）**:
+系统在钱包执行器成功买入预测市场头寸后保存的持仓引用。它用于后续观察价格、结算状态和风险变化；它不是新的最终决策，也不自动授权卖出。
+_Avoid_: Portfolio Strategy, Sell Order, Final Decision, 自动卖出授权
+
 **Wallet Action Proposal（钱包动作提案）**:
 建议中描述的潜在预测市场钱包动作。它仅表示系统可能请求执行的头寸动作内容，在通过执行网关前不具备执行资格。
 _Avoid_: Transaction, Order, Wallet Authorization, Asset Swap, 钱包操作
@@ -99,6 +107,18 @@ _Avoid_: Transaction, Order, Wallet Authorization, Asset Swap, 钱包操作
 **User Approval（用户确认）**:
 用户对最终决策中的钱包动作提案给予的显式执行许可。MVP 中它确认的是执行计划，不表示真实下注已经发生。
 _Avoid_: Implicit Consent, Login, Wallet Connection, 默认授权
+
+**Investment Plan（投资计划）**:
+用户预先配置的长期决策与执行边界。它限定系统可以监控的主题范围、风险约束、资金限额和是否允许自主执行；一次 Decision Run 只有在命中某个投资计划后，才可以进入自主执行判断。
+_Avoid_: Single Trade, Decision Topic, Wallet Authorization, 自动交易开关
+
+**Investment Plan Snapshot（投资计划快照）**:
+一次 Decision Run 使用的投资计划在执行判断时刻的冻结副本。它用于证明当时生效的主题范围、限额、风险边界和自主执行设置，而不是后续可编辑的当前计划。
+_Avoid_: Live Settings, User Preference, Mutable Plan, 当前配置
+
+**Scheduled Monitoring（定时监控）**:
+系统按用户配置的频率检查投资计划覆盖的主题范围，并在发现合适盘口时发起后续筛选与决策流程。它不是实时事件监听，也不表示每次监控都会创建 Decision Run。
+_Avoid_: Event Stream, Real-Time Feed, Webhook Trigger, 实时监听
 
 **Autonomous Execution Policy（自主执行策略）**:
 允许系统在预设限额、盘口条件和风控约束内跳过逐次用户确认的执行规则。它属于 V2 范围。
