@@ -251,11 +251,39 @@ export type ExecutionRecord = {
   createdAt: IsoTimestamp;
 };
 
+export type AgentRunTraceReference = {
+  engine: "GLM-5.1";
+  generatedAt: IsoTimestamp;
+  task: {
+    targetMarketId: string;
+    objective: string;
+  };
+  steps: readonly {
+    id: string;
+    title: string;
+    phase: string;
+    observation: string;
+    evidenceRefs: readonly string[];
+    riskChecks?: readonly string[];
+    selfCorrections?: readonly string[];
+  }[];
+  finalLensDraft: {
+    action: string;
+    targetMarketId: string;
+    confidence: number;
+    riskLevel: string;
+    rationale: string;
+    evidenceRefs: readonly string[];
+    externalRiskFlags: readonly string[];
+  };
+};
+
 export type DecisionDossier = {
   id: string;
   topic: DecisionTopic;
   decisionRun: DecisionRun;
   evidenceSnapshot: EvidenceSnapshot;
+  agentRunTrace?: AgentRunTraceReference;
   agentRecommendations: readonly AgentRecommendation[];
   finalDecision: FinalDecision;
   auditAnchors: readonly AuditAnchor[];

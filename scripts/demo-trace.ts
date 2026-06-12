@@ -1,4 +1,5 @@
 import { generateOrLoadAgentRunTrace } from "../src/agent-run-trace.js";
+import { hashAuditPayload } from "../src/decision-dossier-audit.js";
 import { fetchLivePolymarketMarketEvidence } from "../src/live-polymarket-market.js";
 
 async function main(): Promise<void> {
@@ -26,6 +27,7 @@ async function main(): Promise<void> {
     marketEvidence: marketResult.evidence,
     traceSource: traceResult.source,
     fallbackReason: traceResult.fallbackReason,
+    glmTraceHash: hashAuditPayload(traceResult.trace),
     trace: traceResult.trace,
   }, null, 2));
 }

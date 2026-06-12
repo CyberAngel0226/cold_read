@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 import type {
   AgentRecommendation,
+  AgentRunTraceReference,
   DecisionDossier,
   EvidenceSnapshot,
   ExecutionRecord,
@@ -19,6 +20,7 @@ export type AuditHashMetadata = {
 
 export type DecisionDossierAuditSections = {
   agentRecommendations: readonly AgentRecommendation[];
+  agentRunTrace?: AgentRunTraceReference;
   evidenceSnapshot: EvidenceSnapshot;
   executionRecord?: ExecutionRecord;
   finalDecision: FinalDecision;
@@ -30,6 +32,7 @@ export type DecisionDossierAuditPayload = {
   sections: DecisionDossierAuditSections;
   hashes: {
     agentRecommendations: AuditHashMetadata;
+    agentRunTrace?: AuditHashMetadata;
     dossier: AuditHashMetadata;
     evidenceSnapshot: AuditHashMetadata;
     executionRecord?: AuditHashMetadata;
@@ -60,6 +63,9 @@ export function createDecisionDossierAuditPayload(
 ): DecisionDossierAuditPayload {
   const sections: DecisionDossierAuditSections = {
     agentRecommendations: decisionDossier.agentRecommendations,
+    ...(decisionDossier.agentRunTrace === undefined
+      ? {}
+      : { agentRunTrace: decisionDossier.agentRunTrace }),
     evidenceSnapshot: decisionDossier.evidenceSnapshot,
     ...(decisionDossier.executionRecord === undefined
       ? {}
@@ -73,6 +79,9 @@ export function createDecisionDossierAuditPayload(
     sections,
     hashes: {
       agentRecommendations: createAuditHashMetadata(sections.agentRecommendations),
+      ...(sections.agentRunTrace === undefined
+        ? {}
+        : { agentRunTrace: createAuditHashMetadata(sections.agentRunTrace) }),
       dossier: createAuditHashMetadata(sections),
       evidenceSnapshot: createAuditHashMetadata(sections.evidenceSnapshot),
       ...(sections.executionRecord === undefined
