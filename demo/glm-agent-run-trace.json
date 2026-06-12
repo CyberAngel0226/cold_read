@@ -1,0 +1,70 @@
+{
+  "engine": "GLM-5.1",
+  "generatedAt": "2026-06-12T00:00:00.000Z",
+  "task": {
+    "targetMarketId": "fed-cuts-in-july",
+    "objective": "Analyze a live Polymarket market and draft an auditable lens decision."
+  },
+  "steps": [
+    {
+      "id": "step-1",
+      "title": "Normalize live market evidence",
+      "phase": "observe_market",
+      "observation": "The agent loads a live Polymarket market, records the question, outcomes, prices, status, volume, liquidity, and resolution text.",
+      "evidenceRefs": ["market.question", "market.outcomes", "market.prices", "market.resolutionRules"]
+    },
+    {
+      "id": "step-2",
+      "title": "Estimate market structure",
+      "phase": "observe_market",
+      "observation": "YES is expensive relative to NO, so the market already prices in a strong consensus.",
+      "riskChecks": ["Avoid paying a high consensus price without an independent catalyst."],
+      "evidenceRefs": ["market.prices.YES", "market.prices.NO", "market.liquidity"]
+    },
+    {
+      "id": "step-3",
+      "title": "Search for missing context",
+      "phase": "observe_context",
+      "observation": "The trace marks that live external news confirmation is required before any buy recommendation can become executable.",
+      "riskChecks": ["Do not infer the real-world event state from prediction market price alone."],
+      "evidenceRefs": ["market.sourceUrl", "market.resolutionRules"]
+    },
+    {
+      "id": "step-4",
+      "title": "Run veto checks",
+      "phase": "veto_check",
+      "observation": "The agent refuses execution because source diversity is still incomplete for a real-money order.",
+      "riskChecks": ["Block wallet execution until independent confirmation is attached."],
+      "evidenceRefs": ["market.sourceApiUrl"]
+    },
+    {
+      "id": "step-5",
+      "title": "Self-correct draft action",
+      "phase": "self_correction",
+      "observation": "The initial buy-leaning draft is corrected to HOLD because the evidence chain is not strong enough for autonomous execution.",
+      "selfCorrections": ["Downgrade BUY_YES_SMALL to HOLD when the only strong signal is market price."],
+      "evidenceRefs": ["market.prices.YES", "market.resolutionRules"]
+    },
+    {
+      "id": "step-6",
+      "title": "Prepare audit material",
+      "phase": "audit_prepare",
+      "observation": "The trace keeps every decision claim tied to evidence references so the final dossier can be anchored later.",
+      "riskChecks": ["Require user approval before wallet execution."],
+      "evidenceRefs": ["trace.steps", "trace.finalLensDraft"]
+    }
+  ],
+  "finalLensDraft": {
+    "action": "HOLD",
+    "targetMarketId": "fed-cuts-in-july",
+    "confidence": 0.62,
+    "riskLevel": "medium",
+    "rationale": "The market is live and analyzable, but ColdRead should not execute from market price alone. The auditable recommendation is HOLD until external confirmation is attached.",
+    "evidenceRefs": ["market.prices.YES", "market.prices.NO", "market.resolutionRules", "trace.steps.step-5"],
+    "externalRiskFlags": [
+      "Needs external news confirmation before buy.",
+      "Wallet execution requires explicit user approval.",
+      "Audit anchor should record the final dossier before any production run."
+    ]
+  }
+}

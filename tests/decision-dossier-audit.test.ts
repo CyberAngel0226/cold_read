@@ -6,6 +6,7 @@ import {
   createDecisionDossierAuditPayload,
   hashAuditPayload,
   type AgentRecommendation,
+  type AgentRunTrace,
   type DecisionDossier,
   type EvidenceSnapshot,
   type ExecutionRecord,
@@ -156,6 +157,33 @@ const decisionDossier: DecisionDossier = {
   ]),
 };
 
+const agentRunTrace: AgentRunTrace = {
+  engine: "GLM-5.1",
+  generatedAt: "2026-06-10T00:04:30.000Z",
+  task: {
+    targetMarketId: "screened_candidate_poly_1",
+    objective: "Analyze the screened market and produce an auditable lens draft.",
+  },
+  steps: [
+    {
+      id: "trace_step_1",
+      title: "Read frozen evidence",
+      phase: "observe_market",
+      observation: "The market has a strong YES signal and sufficient liquidity.",
+      evidenceRefs: ["screened_candidate_poly_1"],
+    },
+  ],
+  finalLensDraft: {
+    action: "BUY_YES_SMALL",
+    targetMarketId: "screened_candidate_poly_1",
+    confidence: 0.72,
+    riskLevel: "low",
+    rationale: "The trace supports a small YES recommendation.",
+    evidenceRefs: ["screened_candidate_poly_1"],
+    externalRiskFlags: [],
+  },
+};
+
 test("creates Decision Dossier audit payload hash metadata for audit-relevant sections", () => {
   const auditPayload = createDecisionDossierAuditPayload(decisionDossier);
 
@@ -192,6 +220,33 @@ test("creates Decision Dossier audit payload hash metadata for audit-relevant se
   );
 });
 
+test("includes Agent Run Trace audit metadata when the dossier carries trace material", () => {
+  const auditPayload = createDecisionDossierAuditPayload({
+    ...decisionDossier,
+    agentRunTrace,
+  });
+
+  assert.deepEqual(Object.keys(auditPayload.sections), [
+    "agentRecommendations",
+    "agentRunTrace",
+    "evidenceSnapshot",
+    "executionRecord",
+    "finalDecision",
+  ]);
+  assert.deepEqual(Object.keys(auditPayload.hashes), [
+    "agentRecommendations",
+    "agentRunTrace",
+    "dossier",
+    "evidenceSnapshot",
+    "executionRecord",
+    "finalDecision",
+  ]);
+  assert.equal(
+    auditPayload.hashes.agentRunTrace?.hash,
+    hashAuditPayload(agentRunTrace),
+  );
+});
+
 test("audit hashes change when audit-relevant content changes", () => {
   const original = createDecisionDossierAuditPayload(decisionDossier);
   const mutated = createDecisionDossierAuditPayload({
@@ -210,6 +265,35 @@ test("audit hashes change when audit-relevant content changes", () => {
   assert.equal(
     original.hashes.evidenceSnapshot.hash,
     mutated.hashes.evidenceSnapshot.hash,
+  );
+});
+
+test("audit hashes change when Agent Run Trace content changes", () => {
+  const original = createDecisionDossierAuditPayload({
+    ...decisionDossier,
+    agentRunTrace,
+  });
+  const mutated = createDecisionDossierAuditPayload({
+    ...decisionDossier,
+    agentRunTrace: {
+      ...agentRunTrace,
+      steps: [
+        {
+          ...agentRunTrace.steps[0],
+          observation: "The trace observation was changed.",
+        },
+      ],
+    },
+  });
+
+  assert.notEqual(
+    original.hashes.agentRunTrace?.hash,
+    mutated.hashes.agentRunTrace?.hash,
+  );
+  assert.notEqual(original.hashes.dossier.hash, mutated.hashes.dossier.hash);
+  assert.equal(
+    original.hashes.finalDecision.hash,
+    mutated.hashes.finalDecision.hash,
   );
 });
 

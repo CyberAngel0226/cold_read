@@ -1,4 +1,6 @@
 node_modules/
 .tmp/
+dist/
 __pycache__/
 *.pyc
+demo/agent-run-record.latest.json

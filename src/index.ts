@@ -12,3 +12,7 @@ export * from "./decision-dossier-audit.js";
 export * from "./audit-anchor.js";
 export * from "./user-approval.js";
 export * from "./pipeline.js";
+export * from "./mvp-decision-run-api.js";
+export * from "./agent-run-trace.js";
+export * from "./sepolia-calldata-anchor.js";
+export * from "./long-horizon-agent.js";
