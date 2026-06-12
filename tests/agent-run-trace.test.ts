@@ -67,6 +67,7 @@ test("uses the cached demo trace when ZAI_API_KEY is absent", async () => {
 
   const result = await generateOrLoadAgentRunTrace({
     marketEvidence,
+    now: new Date("2026-06-12T12:34:56.000Z"),
     modelClient: async () => {
       calls += 1;
       return JSON.stringify(validGeneratedTrace());
@@ -76,6 +77,7 @@ test("uses the cached demo trace when ZAI_API_KEY is absent", async () => {
   assert.equal(result.source, "cached_demo");
   assert.equal(result.fallbackReason, "missing_api_key");
   assert.equal(calls, 0);
+  assert.equal(result.trace.generatedAt, "2026-06-12T12:34:56.000Z");
   assert.equal(result.trace.finalLensDraft.targetMarketId, marketEvidence.slug);
 });
 

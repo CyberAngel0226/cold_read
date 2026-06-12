@@ -60,6 +60,7 @@ export type GenerateOrLoadAgentRunTraceInput = {
   model?: string;
   baseUrl?: string;
   modelClient?: AgentRunTraceModelClient;
+  now?: Date;
 };
 
 export type AgentRunTraceResult = {
@@ -103,7 +104,7 @@ export const cachedDemoAgentRunTrace: AgentRunTrace =
 export async function generateOrLoadAgentRunTrace(
   input: GenerateOrLoadAgentRunTraceInput,
 ): Promise<AgentRunTraceResult> {
-  const cached = traceForMarket(input.marketEvidence);
+  const cached = traceForMarket(input.marketEvidence, input.now ?? new Date());
   const apiKey = input.apiKey ?? process.env.ZAI_API_KEY;
 
   if (apiKey === undefined || apiKey.trim() === "") {
@@ -372,10 +373,14 @@ function parseFinalLensDraft(
   };
 }
 
-function traceForMarket(marketEvidence: LivePolymarketMarketEvidence): AgentRunTrace {
+function traceForMarket(
+  marketEvidence: LivePolymarketMarketEvidence,
+  generatedAt: Date,
+): AgentRunTrace {
   const targetMarketId = marketEvidence.slug ?? marketEvidence.conditionId ?? marketEvidence.id;
   return {
     ...cachedDemoAgentRunTrace,
+    generatedAt: generatedAt.toISOString(),
     task: {
       ...cachedDemoAgentRunTrace.task,
       targetMarketId,
