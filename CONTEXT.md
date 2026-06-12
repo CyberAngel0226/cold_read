@@ -72,6 +72,10 @@ _Avoid_: News Agent, Tavily Agent, Sentiment Lens, 新闻 Agent
 基于同一个证据快照和特定分析维度生成 Agent 建议的分析参与者。一次 Decision Run 中的多个分析 Agent 应覆盖不同分析维度，后续版本可以增加更多参与者。
 _Avoid_: Agent A, Agent B, Polymarket Agent, Tavily Agent
 
+**Agent Run Trace（智能体运行轨迹）**:
+一次分析 Agent 在长程任务中的阶段化可审计记录。它描述规划、观察、风险检查、自我修正和审计准备等外部可展示步骤；它不是完整思维链，也不应包含不可审计的私密推理。
+_Avoid_: Chain-of-Thought, Debug Log, Chat Transcript, 思维链
+
 **Agent Recommendation（Agent 建议）**:
 单个分析 Agent 基于证据快照提出的候选决策。它最多选择一个目标筛选盘口和一个建议动作，并包含分析维度、理由、置信度、风险等级，以及可选的钱包动作建议；钱包动作建议不表示已经获准执行。
 _Avoid_: Signal, Prediction, Order, 待执行交易

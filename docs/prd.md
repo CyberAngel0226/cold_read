@@ -115,6 +115,10 @@ MVP 保留 User Approval 按钮，但用户确认的只是拟执行计划。MVP 
 - `CONTEXT.md` 中的 glossary 是本 PRD 的 canonical language source。
 - 后续版本可以增加更多 Analysis Lens，而不改变核心 Decision Run 模型。
 - 未来钱包执行应保持同样的审计模型：Agent Recommendation 和 Final Decision 必须与 Execution Record 分离。
+- Hackathon 提交优先级是 GitHub repo 与录屏叙事，而不是现场完整长流程运行。短期演示应优先展示 Decision Timeline（决策时间线）、Veto Condition（否决条件）、Decision Dossier（决策档案）hash、Sepolia Audit Anchor（Sepolia 审计锚点）交易引用，以及 GLM-5.1（智谱模型）驱动的 Agent Run Trace（智能体运行轨迹）。
+- GLM-5.1（智谱模型）应作为 Z.AI Track 的长程任务 Agent Engine（智能体引擎）接入。为了演示稳定性，系统可以预生成 Agent Run Trace（智能体运行轨迹）并在录屏中展示；存在 `ZAI_API_KEY` 时可重新生成轨迹，没有 key 时使用缓存轨迹。
+- GLM-5.1（智谱模型）生成的 Agent Run Trace（智能体运行轨迹）应进入 Decision Dossier（决策档案）的审计材料并参与 audit hash（审计哈希），避免演示轨迹看起来像事后附加内容。
+- Sepolia Audit Anchor（Sepolia 审计锚点）可以在短期演示中先锚定固定 demo hash（演示哈希），不必等待完整 pipeline（流水线）自动触发上链；README（项目说明）应明确区分 demo-time verifier（演示验证器）与后续自动 sender（发送器）。
 - V2 应围绕 Investment Plan（投资计划）驱动的 Autonomous Execution Policy（自主执行策略）演进；用户先配置监控主题、资金限额、风险边界和是否允许跳过逐次 User Approval（用户确认），Agent 只能在这些边界内发现具体 Polymarket 盘口并进入 Execution Gate（执行网关）判断。
 - V2 的产品核心仍然是 Verifiable Audit Trail（可验证审计链路），不是单纯的自动交易能力。后台买入、Cobo Wallet Executor（Cobo 钱包执行器）和 Polymarket Mainnet Execution（Polymarket 主网执行）都必须服务于让用户验证 Agent 在什么证据、什么策略边界和什么执行网关判断下完成了动作。
 - Investment Plan（投资计划）默认只启用 Scheduled Monitoring（定时监控）和 Decision Run（决策运行）生成；Allow Autonomous Execution（允许自主执行）必须由用户显式开启，并且仍需每次通过 Execution Gate（执行网关）。
