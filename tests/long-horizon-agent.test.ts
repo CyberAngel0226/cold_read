@@ -78,6 +78,7 @@ test("require-live failure in pretty interactive mode waits for Enter", async ()
 
 test("live mode calls GLM-5.1 planner across the bounded multi-step run", async () => {
   const plannerCalls: number[] = [];
+  const progressEvents: string[] = [];
   const result = await runLongHorizonAuditAgent({
     market,
     env: {
@@ -85,6 +86,9 @@ test("live mode calls GLM-5.1 planner across the bounded multi-step run", async 
       SEPOLIA_ANCHOR_TO: anchorTo,
     },
     now: new Date("2026-06-13T00:00:00.000Z"),
+    onProgress: (event) => {
+      progressEvents.push(`${event.kind}:${event.step.index}`);
+    },
     plannerClient: async (request) => {
       plannerCalls.push(request.stepIndex);
       assert.equal(request.model, "glm-5.1");
@@ -100,6 +104,20 @@ test("live mode calls GLM-5.1 planner across the bounded multi-step run", async 
   assert.equal(result.record.mode, "live");
   assert.match(result.record.steps[0].modelAction.summary, /plan_task/);
   assert.match(result.record.steps[5].modelAction.summary, /prepare_sepolia_anchor/);
+  assert.deepEqual(progressEvents, [
+    "step_started:1",
+    "step_completed:1",
+    "step_started:2",
+    "step_completed:2",
+    "step_started:3",
+    "step_completed:3",
+    "step_started:4",
+    "step_completed:4",
+    "step_started:5",
+    "step_completed:5",
+    "step_started:6",
+    "step_completed:6",
+  ]);
 });
 
 test("live mode falls back transparently to cached replay when GLM call fails", async () => {

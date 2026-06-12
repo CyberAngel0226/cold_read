@@ -42,6 +42,23 @@ export type LongHorizonAgentStep = {
   repairOfStepId?: string;
 };
 
+export type LongHorizonAgentProgressStep = {
+  index: number;
+  titleZh: string;
+  titleEn: string;
+  tool: LongHorizonAgentToolName;
+};
+
+export type LongHorizonAgentProgressEvent =
+  | {
+      kind: "step_started";
+      step: LongHorizonAgentProgressStep;
+    }
+  | {
+      kind: "step_completed";
+      step: LongHorizonAgentStep;
+    };
+
 export type LongHorizonAgentRunRecord = {
   version: "coldread.long-horizon-agent-run.v1";
   engine: "GLM-5.1";
@@ -81,6 +98,7 @@ export type RunLongHorizonAuditAgentInput = {
   sendAnchor?: boolean;
   now?: Date;
   plannerClient?: LongHorizonAgentPlannerClient;
+  onProgress?: (event: LongHorizonAgentProgressEvent) => void | Promise<void>;
 };
 
 export type RunLongHorizonAuditAgentResult =
@@ -207,7 +225,7 @@ export async function runLongHorizonAuditAgent(
   const createdAt = (input.now ?? new Date()).toISOString();
   const finalTrace = traceForMarket(input.market, createdAt);
   const traceHash = hashAuditPayload(finalTrace);
-  let steps = buildCachedReplaySteps(input.market, traceHash);
+  let steps: readonly LongHorizonAgentStep[];
 
   if (env.ZAI_API_KEY) {
     const plannerClient = input.plannerClient ?? createZaiPlannerClient(env.ZAI_API_KEY);
@@ -216,6 +234,7 @@ export async function runLongHorizonAuditAgent(
         market: input.market,
         traceHash,
         plannerClient,
+        onProgress: input.onProgress,
       });
       mode = "live";
     } catch {
@@ -226,7 +245,18 @@ export async function runLongHorizonAuditAgent(
         };
       }
       fallbackReason = "live GLM call failed; using committed replay";
+      steps = await buildCachedReplaySteps({
+        market: input.market,
+        traceHash,
+        onProgress: input.onProgress,
+      });
     }
+  } else {
+    steps = await buildCachedReplaySteps({
+      market: input.market,
+      traceHash,
+      onProgress: input.onProgress,
+    });
   }
 
   const anchor = await runSepoliaCalldataAnchor({
@@ -378,9 +408,15 @@ async function buildLiveSteps(input: {
   market: string;
   traceHash: string;
   plannerClient: LongHorizonAgentPlannerClient;
+  onProgress?: (event: LongHorizonAgentProgressEvent) => void | Promise<void>;
 }): Promise<LongHorizonAgentStep[]> {
   const steps: LongHorizonAgentStep[] = [];
   for (const spec of stepSpecs) {
+    await input.onProgress?.({
+      kind: "step_started",
+      step: progressStep(spec),
+    });
+
     const planned = await input.plannerClient({
       model: "glm-5.1",
       market: input.market,
@@ -393,27 +429,56 @@ async function buildLiveSteps(input: {
       }),
     });
 
-    steps.push(buildStep({
+    const completedStep = buildStep({
       market: input.market,
       traceHash: input.traceHash,
       spec,
       modelSummary: planned.actionSummary,
-    }));
+    });
+    steps.push(completedStep);
+    await input.onProgress?.({
+      kind: "step_completed",
+      step: completedStep,
+    });
   }
 
   return steps;
 }
 
-function buildCachedReplaySteps(
-  market: string,
-  traceHash: string,
-): LongHorizonAgentStep[] {
-  return stepSpecs.map((spec) => buildStep({
-    market,
-    traceHash,
-    spec,
-    modelSummary: `Select ${spec.tool} as the next bounded ColdRead tool.`,
-  }));
+async function buildCachedReplaySteps(input: {
+  market: string;
+  traceHash: string;
+  onProgress?: (event: LongHorizonAgentProgressEvent) => void | Promise<void>;
+}): Promise<LongHorizonAgentStep[]> {
+  const steps: LongHorizonAgentStep[] = [];
+  for (const spec of stepSpecs) {
+    await input.onProgress?.({
+      kind: "step_started",
+      step: progressStep(spec),
+    });
+    const completedStep = buildStep({
+      market: input.market,
+      traceHash: input.traceHash,
+      spec,
+      modelSummary: `Select ${spec.tool} as the next bounded ColdRead tool.`,
+    });
+    steps.push(completedStep);
+    await input.onProgress?.({
+      kind: "step_completed",
+      step: completedStep,
+    });
+  }
+
+  return steps;
+}
+
+function progressStep(spec: typeof stepSpecs[number]): LongHorizonAgentProgressStep {
+  return {
+    index: spec.index,
+    titleZh: spec.titleZh,
+    titleEn: spec.titleEn,
+    tool: spec.tool,
+  };
 }
 
 function buildStep(input: {
