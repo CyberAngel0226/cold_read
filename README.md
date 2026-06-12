@@ -87,17 +87,21 @@ The Hackathon live proof path is planned around:
 
 ```bash
 npm run demo:live -- --market <polymarket-market-slug-or-id>
+npm run demo:trace -- --market <polymarket-market-slug-or-id>
 ```
 
-The command is intended to read real Polymarket market evidence, generate or load a GLM-5.1 Agent Run Trace, produce a Decision Dossier hash, and optionally write a Sepolia 0 ETH calldata Audit Anchor transaction.
+`demo:live` reads real Polymarket market evidence and prints the normalized evidence packet with source identifiers preserved.
 
-For the first live proof slice, `--market` accepts a Polymarket market slug, market id, or condition id and prints normalized market evidence with source identifiers preserved. This step does not require a wallet and does not place trades.
+`demo:trace` reads the same live market evidence, then generates or loads a GLM-5.1 Agent Run Trace. When `ZAI_API_KEY` is missing or the model response is malformed, the command falls back to the committed cached trace at `demo/glm-agent-run-trace.json` and reports the fallback reason.
+
+Both commands accept a Polymarket market slug, market id, or condition id. These steps do not require a wallet and do not place trades.
 
 ## Environment Variables
 
 ```text
 ZAI_API_KEY=<your Z.AI API key>
 ZAI_MODEL=glm-5.1
+ZAI_API_BASE_URL=<optional OpenAI-compatible Z.AI chat completions endpoint>
 SEPOLIA_RPC_URL=<your Sepolia RPC URL>
 SEPOLIA_PRIVATE_KEY=<demo wallet private key>
 SEPOLIA_ANCHOR_TO=<address that receives the 0 ETH calldata transaction>
