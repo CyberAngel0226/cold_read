@@ -105,6 +105,13 @@ npm run demo:anchor -- --hash <sha256-dossier-or-trace-hash> --send
 
 If `--hash` is omitted, `demo:anchor` uses the committed demo dossier anchor hash derived from the cached GLM-5.1 Agent Run Trace.
 
+Add `--pretty` for a bilingual Chinese / English presentation view. The default output stays JSON for scripts:
+
+```bash
+npm run demo:anchor -- --pretty
+npm run demo:anchor -- --send --pretty
+```
+
 ## Environment Variables
 
 ```text

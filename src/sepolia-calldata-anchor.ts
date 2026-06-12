@@ -103,6 +103,35 @@ export function demoDossierHash(): string {
   });
 }
 
+export function formatSepoliaAnchorPrettyOutput(
+  result: SepoliaCalldataAnchorResult,
+): string {
+  const lines = [
+    "╭────────────────────────────────────────────╮",
+    "│  🧊 ColdRead Sepolia 审计锚点 / Audit Anchor │",
+    "│  AI 决策材料哈希 → 链上 calldata             │",
+    "╰────────────────────────────────────────────╯",
+    "",
+    "✅ 读取锚点哈希 / Load anchor hash",
+    "✅ 构造 0 ETH 交易 / Build 0 ETH transaction",
+    result.status === "SENT"
+      ? "✅ 已写入 Sepolia / Written to Sepolia"
+      : "🟡 当前为 dry-run / Dry-run only",
+    "",
+    `网络 / Network: Sepolia`,
+    `模式 / Mode: ${result.status}`,
+    `目标地址 / To: ${result.to}`,
+    `锚点哈希 / Anchor Hash: ${result.hash}`,
+    `调用数据 / Calldata: ${result.calldata}`,
+    ...(result.status === "SENT"
+      ? [`交易哈希 / Tx Hash: ${result.transactionHash}`]
+      : []),
+    `浏览器 / Explorer: ${result.explorerLink}`,
+  ];
+
+  return lines.join("\n");
+}
+
 async function sendZeroEthCalldataTransaction(input: {
   rpcUrl: string;
   privateKey: string;
