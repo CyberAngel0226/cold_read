@@ -152,6 +152,47 @@ test("require-live JSON failure does not wait and stays parseable", async () => 
   assert.equal(JSON.parse(result.stdout).kind, "long_horizon_agent_error");
 });
 
+test("CLI fails clearly when --market is missing", async () => {
+  const result = await runLongHorizonAgentCli({
+    args: [],
+    env: {
+      SEPOLIA_ANCHOR_TO: anchorTo,
+    },
+  });
+
+  assert.equal(result.exitCode, 1);
+  const error = JSON.parse(result.stdout);
+  assert.equal(error.kind, "long_horizon_agent_error");
+  assert.equal(error.reason, "--market is required");
+});
+
+test("CLI fails clearly when --market has no value", async () => {
+  const result = await runLongHorizonAgentCli({
+    args: ["--market", "--require-live"],
+    env: {
+      SEPOLIA_ANCHOR_TO: anchorTo,
+    },
+  });
+
+  assert.equal(result.exitCode, 1);
+  const error = JSON.parse(result.stdout);
+  assert.equal(error.kind, "long_horizon_agent_error");
+  assert.equal(error.reason, "--market is required");
+});
+
+test("CLI renders a pretty failure when --market has no value in pretty mode", async () => {
+  const result = await runLongHorizonAgentCli({
+    args: ["--market", "--pretty"],
+    env: {
+      SEPOLIA_ANCHOR_TO: anchorTo,
+    },
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.match(result.stdout, /❌ 需要实时 GLM-5\.1 \/ Live GLM-5\.1 required/);
+  assert.match(result.stdout, /原因 \/ Reason: --market is required/);
+});
+
 test("CLI writes the latest Agent Run Record on successful runs", async () => {
   let writtenMarket: string | undefined;
   const result = await runLongHorizonAgentCli({
@@ -167,4 +208,21 @@ test("CLI writes the latest Agent Run Record on successful runs", async () => {
   assert.equal(result.exitCode, 0);
   assert.equal(writtenMarket, market);
   assert.equal(JSON.parse(result.stdout).kind, "long_horizon_agent_run");
+});
+
+test("CLI returns a failed exit code when latest Agent Run Record write fails", async () => {
+  const result = await runLongHorizonAgentCli({
+    args: ["--market", market],
+    env: {
+      SEPOLIA_ANCHOR_TO: anchorTo,
+    },
+    writeLatestRecord: async () => {
+      throw new Error("disk full");
+    },
+  });
+
+  assert.equal(result.exitCode, 1);
+  const error = JSON.parse(result.stdout);
+  assert.equal(error.kind, "long_horizon_agent_error");
+  assert.equal(error.reason, "failed to write Agent Run Record");
 });

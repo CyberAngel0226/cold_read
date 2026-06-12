@@ -260,11 +260,19 @@ export async function runLongHorizonAuditAgent(
 export async function runLongHorizonAgentCli(
   input: RunLongHorizonAgentCliInput,
 ): Promise<RunLongHorizonAgentCliResult> {
-  const market = parseFlag(input.args, "--market") ?? "";
+  const market = parseRequiredMarket(input.args);
   const pretty = input.args.includes("--pretty");
   const requireLive = input.args.includes("--require-live");
   const sendAnchor = input.args.includes("--send-anchor");
   const noWait = input.args.includes("--no-wait");
+
+  if (market === undefined) {
+    return formatCliError({
+      reason: "--market is required",
+      pretty,
+      wait: false,
+    });
+  }
 
   const result = await runLongHorizonAuditAgent({
     market,
@@ -274,7 +282,16 @@ export async function runLongHorizonAgentCli(
   });
 
   if (result.kind === "agent_run_completed") {
-    await input.writeLatestRecord?.(result.record);
+    try {
+      await input.writeLatestRecord?.(result.record);
+    } catch {
+      return formatCliError({
+        reason: "failed to write Agent Run Record",
+        pretty,
+        wait: false,
+      });
+    }
+
     return {
       exitCode: 0,
       stdout: pretty
@@ -288,11 +305,12 @@ export async function runLongHorizonAgentCli(
   }
 
   if (pretty) {
+    const wait = input.isInteractive === true && !noWait;
     const stdout = formatLongHorizonAgentFailure({
       reason: result.reason,
-      waitForEnter: input.isInteractive === true && !noWait,
+      waitForEnter: wait,
     });
-    if (input.isInteractive === true && !noWait) {
+    if (wait) {
       await (input.waitForEnter ?? waitForEnter)();
     }
     return {
@@ -303,12 +321,8 @@ export async function runLongHorizonAgentCli(
   }
 
   return {
+    ...formatJsonCliError(result.reason),
     exitCode: 1,
-    stdout: `${JSON.stringify({
-      kind: "long_horizon_agent_error",
-      reason: result.reason,
-    }, null, 2)}\n`,
-    stderr: "",
   };
 }
 
@@ -517,6 +531,47 @@ function parseFlag(args: readonly string[], flag: string): string | undefined {
   const index = args.indexOf(flag);
   if (index === -1) return undefined;
   return args[index + 1];
+}
+
+function parseRequiredMarket(args: readonly string[]): string | undefined {
+  const market = parseFlag(args, "--market");
+  if (market === undefined || market.trim() === "" || market.startsWith("--")) {
+    return undefined;
+  }
+
+  return market;
+}
+
+function formatCliError(input: {
+  reason: string;
+  pretty: boolean;
+  wait: boolean;
+}): RunLongHorizonAgentCliResult {
+  if (input.pretty) {
+    return {
+      exitCode: 1,
+      stdout: formatLongHorizonAgentFailure({
+        reason: input.reason,
+        waitForEnter: input.wait,
+      }),
+      stderr: "",
+    };
+  }
+
+  return {
+    ...formatJsonCliError(input.reason),
+    exitCode: 1,
+  };
+}
+
+function formatJsonCliError(reason: string): Omit<RunLongHorizonAgentCliResult, "exitCode"> {
+  return {
+    stdout: `${JSON.stringify({
+      kind: "long_horizon_agent_error",
+      reason,
+    }, null, 2)}\n`,
+    stderr: "",
+  };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
