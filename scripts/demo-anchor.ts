@@ -1,14 +1,24 @@
-import { runSepoliaCalldataAnchor, type SepoliaAnchorMode } from "../src/sepolia-calldata-anchor.js";
+import {
+  formatSepoliaAnchorPrettyOutput,
+  runSepoliaCalldataAnchor,
+  type SepoliaAnchorMode,
+} from "../src/sepolia-calldata-anchor.js";
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const hash = parseFlag(args, "--hash");
   const mode: SepoliaAnchorMode = args.includes("--send") ? "send" : "dry-run";
+  const pretty = args.includes("--pretty");
 
   const result = await runSepoliaCalldataAnchor({
     mode,
     hash,
   });
+
+  if (pretty) {
+    console.log(formatSepoliaAnchorPrettyOutput(result));
+    return;
+  }
 
   console.log(JSON.stringify({
     kind: "sepolia_calldata_audit_anchor",
