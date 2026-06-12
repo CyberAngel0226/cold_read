@@ -1,10 +1,9 @@
 import type {
   DecisionTimelineState,
   ExecutionRecord,
-  BuyFinalDecision,
+  FinalDecision,
   RecommendationAction,
   RiskLevel,
-  VetoCondition,
 } from "../../src/index.js";
 
 export type SystemStatus = {
@@ -24,6 +23,14 @@ export type StrategyParameters = {
   vetoOnMajorCounterevidence: boolean;
   requiresUserApproval: boolean;
   executionNetwork: string;
+};
+
+export type AgentRunTraceStep = {
+  index: number;
+  title: string;
+  tool: string;
+  status: "completed" | "failed";
+  observation: string;
 };
 
 export type DecisionRunCard = {
@@ -68,22 +75,26 @@ export type AuditReference = {
 export type DecisionRunDetail = {
   id: string;
   topic: string;
-  finalDecision: BuyFinalDecision;
+  finalDecision: FinalDecision;
   riskLevel: RiskLevel;
-  auditStatus: "ANCHOR VERIFIED";
+  auditStatus: "SEPOLIA READY" | "ANCHOR VERIFIED";
   executionRecord: ExecutionRecord;
   stages: readonly TimelineStage[];
   evidenceReviews: readonly EvidenceReview[];
   auditReferences: readonly AuditReference[];
+  agentRunTrace: readonly AgentRunTraceStep[];
+  traceHash: string;
+  calldata: string;
+  explorerLink: string;
   strategyParameters: StrategyParameters;
 };
 
 export const systemStatuses: readonly SystemStatus[] = [
-  { name: "Polymarket", status: "ONLINE", tone: "chain" },
-  { name: "Tavily", status: "ONLINE", tone: "chain" },
+  { name: "Polymarket", status: "LIVE DATA", tone: "chain" },
+  { name: "GLM-5.1", status: "LONG-HORIZON", tone: "warning" },
+  { name: "Trace Hash", status: "COMPUTED", tone: "anchor" },
+  { name: "Sepolia Anchor", status: "DRY-RUN READY", tone: "anchor" },
   { name: "Cobo", status: "V2 PREVIEW", tone: "preview" },
-  { name: "Audit Anchor", status: "READY", tone: "anchor" },
-  { name: "Agent Queue", status: "2 RUNNING", tone: "warning" },
 ];
 
 export const strategyParameters: StrategyParameters = {
@@ -96,177 +107,201 @@ export const strategyParameters: StrategyParameters = {
   allowedActions: ["BUY_YES_SMALL", "BUY_NO_SMALL", "HOLD"],
   vetoOnMajorCounterevidence: true,
   requiresUserApproval: true,
-  executionNetwork: "Amoy preview",
+  executionNetwork: "Sepolia audit anchor; Polymarket execution deferred",
 };
 
 export const decisionRuns: readonly DecisionRunCard[] = [
   {
-    id: "run_1",
-    topic: "美联储会在 7 月降息吗？",
-    stage: "Final Decision selected",
-    finalAction: "BUY_YES_SMALL",
-    riskLevel: "LOW",
+    id: "run_glm_1",
+    topic: "New Rihanna Album before GTA VI?",
+    stage: "GLM-5.1 long-horizon audit complete",
+    finalAction: "HOLD",
+    riskLevel: "MEDIUM",
     auditStatus: "ANCHOR",
     executionStatus: "DEFERRED_FOR_MVP",
-    strategyName: "Conservative v2",
+    strategyName: "Z.AI Hackathon demo",
   },
   {
-    id: "run_2",
-    topic: "CPI 是否会低于 3%？",
+    id: "run_glm_2",
+    topic: "Fed cuts in July",
+    stage: "Trace validation pending",
+    finalAction: "PENDING",
+    riskLevel: "MEDIUM",
+    auditStatus: "PENDING",
+    executionStatus: "NONE",
+    strategyName: "Cached replay demo",
+  },
+  {
+    id: "run_glm_3",
+    topic: "CPI below 3%",
     stage: "Veto downgrade",
     finalAction: "HOLD",
     riskLevel: "VETO",
     auditStatus: "NO ANCHOR",
     executionStatus: "NONE",
-    strategyName: "Conservative v2",
-  },
-  {
-    id: "run_3",
-    topic: "9 月是否维持利率？",
-    stage: "External Risk Lens running",
-    finalAction: "PENDING",
-    riskLevel: "MEDIUM",
-    auditStatus: "PENDING",
-    executionStatus: "NONE",
-    strategyName: "Conservative v2",
+    strategyName: "Risk boundary demo",
   },
 ];
 
 export const monitoredMarkets: readonly MonitoredMarket[] = [
-  { question: "Fed cuts in July", price: "YES 0.92", status: "$25k liquidity" },
-  { question: "CPI below 3%", price: "YES 0.62", status: "rejected" },
-  { question: "Fed holds in Sep", price: "NO 0.71", status: "watch" },
+  { question: "New Rihanna Album before GTA VI?", price: "YES 0.51 / NO 0.49", status: "live Polymarket material" },
+  { question: "Fed cuts in July", price: "YES 0.92", status: "demo watch only" },
+  { question: "CPI below 3%", price: "YES 0.62", status: "veto example" },
 ];
 
+const traceHash = "2ad57cbc33ecaa236a671390614cbe560b66b2757354e192478a5f4a4ad8b763";
+
 export const decisionRunDetail: DecisionRunDetail = {
-  id: "run_1",
-  topic: "美联储会在 7 月降息吗？",
-  riskLevel: "LOW",
-  auditStatus: "ANCHOR VERIFIED",
+  id: "run_glm_1",
+  topic: "New Rihanna Album before GTA VI?",
+  riskLevel: "MEDIUM",
+  auditStatus: "SEPOLIA READY",
   finalDecision: {
-    id: "decision_1",
-    decisionRunId: "run_1",
-    selectedRecommendationId: "rec_market_structure_1",
-    action: "BUY_YES_SMALL",
+    id: "decision_glm_hold_1",
+    decisionRunId: "run_glm_1",
+    selectedRecommendationId: "rec_external_risk_hold_1",
+    action: "HOLD",
     rationale:
-      "选择 Market Structure Lens 的建议。External Risk Lens 未发现重大反证；Decision Scorer 没有合成新的钱包动作。",
-    vetoConditions: [],
-    walletActionProposal: {
-      id: "wallet_action_1",
-      marketId: "screened_candidate_poly_1",
-      action: "BUY_YES_SMALL",
-      stake: { amount: "5.00", currency: "USDC" },
-      rationale: "Market structure supports a small YES position.",
-    },
-    createdAt: "2026-06-10T00:06:00.000Z",
+      "GLM-5.1 完成长程审计后选择 HOLD：盘口是真实可分析的，但外部风险字段在校验阶段缺失，系统要求先修复并保留审计证据，不直接进入交易执行。",
+    vetoConditions: ["INCOMPLETE_EVIDENCE_SNAPSHOT"],
+    createdAt: "2026-06-13T00:00:00.000Z",
   },
   executionRecord: {
-    id: "execution_1",
-    decisionRunId: "run_1",
-    finalDecisionId: "decision_1",
-    userApprovalId: "approval_1",
+    id: "execution_glm_1",
+    decisionRunId: "run_glm_1",
+    finalDecisionId: "decision_glm_hold_1",
+    userApprovalId: "approval_demo_1",
     status: "DEFERRED_FOR_MVP",
-    note: "User approved the proposed wallet action, but MVP does not place real prediction market trades.",
-    createdAt: "2026-06-10T00:09:00.000Z",
+    note: "MVP 只记录可审计决策链路，不执行真实 Polymarket 下单；Cobo 钱包执行属于 V2。",
+    createdAt: "2026-06-13T00:06:00.000Z",
   },
   stages: [
     {
-      title: "收到主题",
+      title: "任务拆解",
       domainStates: ["topic_received"],
       status: "complete",
-      summary: "记录用户提交的 Decision Topic。",
+      summary: "GLM-5.1 将 Polymarket 盘口分析拆成 6 步可审计任务。",
     },
     {
-      title: "获取盘口",
+      title: "读取真实盘口",
       domainStates: ["markets_fetched"],
       status: "complete",
-      summary: "从 Polymarket 获取 18 个相关盘口。",
+      summary: "读取 New Rihanna Album before GTA VI? 的 Polymarket 市场材料并保留来源链接。",
     },
     {
-      title: "筛选与确认盘口",
-      domainStates: [
-        "candidate_markets_screened",
-        "high_conviction_markets_confirmed",
-      ],
-      status: "complete",
-      summary: "3 个候选盘口通过粗筛，1 个被 Tavily 确认为高置信盘口。",
-    },
-    {
-      title: "冻结证据",
-      domainStates: ["evidence_snapshot_created"],
-      status: "complete",
-      summary: "snapshot_1 冻结盘口证据与上下文证据。",
-    },
-    {
-      title: "Agent 分析建议",
+      title: "生成轨迹草稿",
       domainStates: ["agent_recommendations_created"],
       status: "complete",
-      summary: "Market Structure 和 External Risk 两个 Agent 生成建议。",
+      summary: "生成第一版 Agent Run Trace，记录模型行动、工具调用和观察结果。",
     },
     {
-      title: "最终决策",
+      title: "轨迹校验失败",
+      domainStates: ["agent_recommendations_created"],
+      status: "complete",
+      summary: "校验器发现 externalRiskFlags 缺失，拒绝进入审计载荷。",
+    },
+    {
+      title: "自我修复",
       domainStates: ["final_decision_selected"],
-      status: "active",
-      summary: "默认展开最终决策，展示选择依据、Veto 检查和钱包动作提案边界。",
+      status: "complete",
+      summary: "Agent 补齐风险字段并将建议降级为 HOLD。",
     },
     {
-      title: "审计锚定",
+      title: "哈希与锚点准备",
       domainStates: ["audit_anchor_written"],
-      status: "complete",
-      summary: "Audit Anchor 写入 Amoy preview 链上引用。",
-    },
-    {
-      title: "确认与执行",
-      domainStates: ["user_approval_recorded", "execution_record_created"],
-      status: "complete",
-      summary: "用户确认拟执行方案，Execution Record 记录为 DEFERRED_FOR_MVP。",
+      status: "active",
+      summary: "计算 trace hash，并准备 Sepolia calldata audit anchor。",
     },
   ],
   evidenceReviews: [
     {
-      lens: "Market Structure Lens",
-      action: "BUY_YES_SMALL",
+      lens: "Live Polymarket Material",
+      action: "HOLD",
       confidence: "MEDIUM",
-      riskLevel: "LOW",
+      riskLevel: "MEDIUM",
       evidenceRefs: [
-        "screened_candidate_poly_1",
-        "volume:100000",
-        "liquidity:25000",
+        "polymarket:event/new-rhianna-album-before-gta-vi-926",
+        "YES 0.51",
+        "NO 0.49",
       ],
-      rationale: "价格一边倒、流动性足够、结算规则清晰，支持小额 YES。",
+      rationale: "市场是真实盘口，价格接近均衡；仅凭盘口结构不足以触发小额买入。",
     },
     {
-      lens: "External Risk Lens",
-      action: "BUY_YES_SMALL",
+      lens: "GLM-5.1 Trace Validator",
+      action: "HOLD",
       confidence: "MEDIUM",
-      riskLevel: "LOW",
-      evidenceRefs: ["context_1", "no_major_counterevidence"],
-      rationale: "上下文证据未发现重大反证或临近事件反转风险。",
+      riskLevel: "MEDIUM",
+      evidenceRefs: ["step-4 validation_failed", "step-5 repair_agent_trace"],
+      rationale: "轨迹校验发现缺失风险字段后，Agent 修复并保守降级为 HOLD。",
     },
   ],
   auditReferences: [
-    { label: "network", value: "Amoy preview" },
-    {
-      label: "tx hash",
-      value: "0x8f3a...9d21",
-      href: "https://amoy.polygonscan.com/tx/0x8f3a9d21",
-    },
-    { label: "dossier hash", value: "sha256:7fa2...c031" },
+    { label: "network", value: "Sepolia" },
+    { label: "trace hash", value: traceHash },
+    { label: "calldata", value: `0x${traceHash}` },
     {
       label: "block explorer",
-      value: "amoy.polygonscan.com/tx/0x8f3a...",
-      href: "https://amoy.polygonscan.com/tx/0x8f3a9d21",
+      value: "sepolia.etherscan.io/tx/<pending>",
+      href: "https://sepolia.etherscan.io/tx/<pending>",
+    },
+    { label: "agent run record", value: "demo/agent-run-record.latest.json" },
+  ],
+  agentRunTrace: [
+    {
+      index: 1,
+      title: "任务拆解 / Plan task",
+      tool: "plan_task",
+      status: "completed",
+      observation: "GLM-5.1 制定 6 步审计计划。",
+    },
+    {
+      index: 2,
+      title: "读取真实盘口 / Fetch live market",
+      tool: "fetch_polymarket_market",
+      status: "completed",
+      observation: "找到真实 Polymarket 市场并保留来源链接。",
+    },
+    {
+      index: 3,
+      title: "生成轨迹草稿 / Draft trace",
+      tool: "draft_agent_trace",
+      status: "completed",
+      observation: "GLM-5.1 生成第一版 Agent Run Trace。",
+    },
+    {
+      index: 4,
+      title: "轨迹校验失败 / Trace validation failed",
+      tool: "validate_agent_trace",
+      status: "failed",
+      observation: "trace 缺少 externalRiskFlags，工具拒绝进入审计载荷。",
+    },
+    {
+      index: 5,
+      title: "自我修复 / Self repair",
+      tool: "repair_agent_trace",
+      status: "completed",
+      observation: "GLM-5.1 补齐风险字段，并将建议降级为 HOLD。",
+    },
+    {
+      index: 6,
+      title: "计算哈希并准备锚点 / Compute hash and prepare anchor",
+      tool: "prepare_sepolia_anchor",
+      status: "completed",
+      observation: "已计算 trace hash 并准备 Sepolia calldata anchor。",
     },
   ],
+  traceHash,
+  calldata: `0x${traceHash}`,
+  explorerLink: "https://sepolia.etherscan.io/tx/<pending>",
   strategyParameters,
 };
 
 export function auditSummary(run: DecisionRunDetail): string {
   return [
-    `ColdRead 决策 ${run.id} 已锚定到 ${run.auditReferences[0]?.value ?? "testnet"}。`,
+    `ColdRead ${run.id} 使用 GLM-5.1 完成长程审计。`,
     `Final Decision: ${run.finalDecision.action}`,
-    `Dossier Hash: ${run.auditReferences.find((ref) => ref.label === "dossier hash")?.value ?? "N/A"}`,
-    `Tx: ${run.auditReferences.find((ref) => ref.label === "tx hash")?.href ?? "N/A"}`,
+    `Trace Hash: ${run.traceHash}`,
+    `Sepolia: ${run.explorerLink}`,
   ].join("\n");
 }
 
@@ -274,12 +309,13 @@ export function auditJson(run: DecisionRunDetail): string {
   return JSON.stringify(
     {
       decisionRunId: run.id,
-      network: run.auditReferences[0]?.value,
-      dossierHash: run.auditReferences.find((ref) => ref.label === "dossier hash")?.value,
-      finalDecisionId: run.finalDecision.id,
-      executionRecordId: run.executionRecord.id,
-      transactionHash: run.auditReferences.find((ref) => ref.label === "tx hash")?.value,
-      blockExplorerUrl: run.auditReferences.find((ref) => ref.label === "tx hash")?.href,
+      engine: "GLM-5.1",
+      mode: "live",
+      finalDecision: run.finalDecision.action,
+      traceHash: run.traceHash,
+      calldata: run.calldata,
+      explorerLink: run.explorerLink,
+      agentRunRecord: "demo/agent-run-record.latest.json",
     },
     null,
     2,

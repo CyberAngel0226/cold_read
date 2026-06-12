@@ -19,7 +19,7 @@ const route = useRoute();
 const toast = ref("");
 
 const run = computed(() => ({
-  ...loadDecisionRunDetail(typeof route.params.runId === "string" ? route.params.runId : "run_1"),
+  ...loadDecisionRunDetail(typeof route.params.runId === "string" ? route.params.runId : "run_glm_1"),
 }));
 
 async function copyText(label: string, text: string): Promise<void> {
@@ -56,17 +56,17 @@ function showToast(message: string): void {
           <Copy :size="14" />
           复制摘要
         </button>
-        <button type="button" class="secondary-action" @click="copyText('审计包 JSON', auditJson(run))">
+        <button type="button" class="secondary-action" @click="copyText('审计 JSON', auditJson(run))">
           <FileJson :size="14" />
-          复制审计包 JSON
+          复制审计 JSON
         </button>
         <button
           type="button"
           class="secondary-action danger-action"
-          @click="showToast('用此策略重新运行会创建新的 Decision Run 并消耗 API/token；当前 UI demo 不会自动重跑。')"
+          @click="showToast('重新运行会消耗 GLM/token；当前 demo 不会自动重跑。')"
         >
           <RotateCcw :size="14" />
-          用此策略重新运行
+          重新运行
         </button>
       </div>
     </header>
@@ -77,11 +77,11 @@ function showToast(message: string): void {
 
     <section class="detail-hero">
       <article class="panel run-summary-panel">
-        <p class="eyebrow">Decision Topic</p>
+        <p class="eyebrow">GLM-5.1 Long-Horizon Audit</p>
         <h1>{{ run.topic }}</h1>
         <p>
-          Final Decision 已选择 {{ run.finalDecision.action }}；审计锚点写入 Amoy preview。
-          执行记录为 {{ run.executionRecord.status }}，不代表真实 Polymarket 下单。
+          Final Decision 选择 {{ run.finalDecision.action }}。本次运行展示 Agent 自主计划、工具调用、
+          轨迹校验失败、自我修复和 Sepolia 审计锚点准备，不代表真实 Polymarket 下单。
         </p>
       </article>
       <aside class="panel run-state-panel">
@@ -98,24 +98,24 @@ function showToast(message: string): void {
       <section class="panel timeline-panel">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">Mapped timeline</p>
-            <h2>8 阶段推理时间线</h2>
+            <p class="eyebrow">Agent Run Trace</p>
+            <h2>6 步长程审计轨迹</h2>
           </div>
           <GitBranch :size="20" class="muted-icon" />
         </div>
 
         <button
-          v-for="stage in run.stages"
-          :key="stage.title"
-          :class="['timeline-stage', stage.status]"
+          v-for="step in run.agentRunTrace"
+          :key="step.index"
+          :class="['timeline-stage', step.status === 'failed' ? 'active' : 'complete']"
           type="button"
         >
           <span class="timeline-dot" />
           <span class="timeline-content">
-            <strong>{{ stage.title }}</strong>
-            <small>{{ stage.domainStates.join(' + ') }}</small>
-            <span v-if="stage.status === 'active'" class="timeline-expanded">
-              {{ stage.summary }}
+            <strong>Step {{ step.index }} · {{ step.title }}</strong>
+            <small>{{ step.tool }}</small>
+            <span class="timeline-expanded">
+              {{ step.observation }}
             </span>
           </span>
         </button>
@@ -123,13 +123,13 @@ function showToast(message: string): void {
 
       <section class="detail-center-column">
         <article class="final-panel">
-          <p class="eyebrow">展开阶段 · 最终决策</p>
+          <p class="eyebrow">展开阶段 · 自我修复后决策</p>
           <h2>{{ run.finalDecision.action }}</h2>
           <p>{{ run.finalDecision.rationale }}</p>
           <div class="final-chip-row">
-            <span>selected {{ run.finalDecision.selectedRecommendationId }}</span>
+            <span>selected {{ run.finalDecision.selectedRecommendationId ?? 'none' }}</span>
             <span>veto: {{ run.finalDecision.vetoConditions.length ? run.finalDecision.vetoConditions.join(', ') : 'none' }}</span>
-            <span>stake: {{ run.finalDecision.walletActionProposal.stake.amount }} {{ run.finalDecision.walletActionProposal.stake.currency }}</span>
+            <span>execution: deferred</span>
           </div>
         </article>
 
@@ -137,7 +137,7 @@ function showToast(message: string): void {
           <div class="section-heading">
             <div>
               <p class="eyebrow">Evidence citations</p>
-              <h2>Agent Evidence Review</h2>
+              <h2>证据引用级审计</h2>
             </div>
             <p class="subtle">不展示 chain-of-thought</p>
           </div>
@@ -159,7 +159,7 @@ function showToast(message: string): void {
           <div class="section-heading">
             <div>
               <p class="eyebrow">Clickable audit refs</p>
-              <h2>审计锚点与复制操作</h2>
+              <h2>Sepolia 锚点与复制证据</h2>
             </div>
             <ExternalLink :size="18" class="muted-icon" />
           </div>
@@ -179,39 +179,34 @@ function showToast(message: string): void {
 
       <aside class="detail-right-rail">
         <section class="panel strategy-panel snapshot-panel">
-          <p class="eyebrow">Read-only snapshot</p>
-          <h2>Strategy Parameters Snapshot</h2>
+          <p class="eyebrow">Hash material</p>
+          <h2>审计载荷</h2>
           <p class="panel-note">
-            本次运行使用的是参数快照。修改全局策略不会改变已完成的 Decision Run。
+            Trace Hash 和 calldata 是可复制验证材料；真实发送后 Explorer 会指向 Sepolia Etherscan 交易。
           </p>
           <dl>
-            <div><dt>maxStakePerMarket</dt><dd>{{ run.strategyParameters.maxStakePerMarket }}</dd></div>
-            <div><dt>dailyRiskBudget</dt><dd>{{ run.strategyParameters.dailyRiskBudget }}</dd></div>
-            <div><dt>minimumLiquidity</dt><dd>{{ run.strategyParameters.minimumLiquidity }}</dd></div>
-            <div><dt>minimumHoursUntilClose</dt><dd>{{ run.strategyParameters.minimumHoursUntilClose }}</dd></div>
-            <div><dt>oneSidedPriceThreshold</dt><dd>{{ run.strategyParameters.oneSidedPriceThreshold }}</dd></div>
-            <div><dt>minimumConfidence</dt><dd>{{ run.strategyParameters.minimumConfidence }}</dd></div>
-            <div><dt>requiresUserApproval</dt><dd>ON</dd></div>
-            <div><dt>executionNetwork</dt><dd>{{ run.strategyParameters.executionNetwork }}</dd></div>
+            <div><dt>traceHash</dt><dd>{{ run.traceHash }}</dd></div>
+            <div><dt>calldata</dt><dd>{{ run.calldata }}</dd></div>
+            <div><dt>explorer</dt><dd>{{ run.explorerLink }}</dd></div>
+            <div><dt>agentRunRecord</dt><dd>demo/agent-run-record.latest.json</dd></div>
           </dl>
           <div class="snapshot-actions">
-            <button type="button" class="secondary-action" @click="showToast('已复制为新策略模板。')">
-              复制为新策略
+            <button type="button" class="secondary-action" @click="copyText('Trace Hash', run.traceHash)">
+              复制 Trace Hash
             </button>
-            <button type="button" class="secondary-action" @click="showToast('已进入基于快照调整的草稿态；当前 demo 不会保存。')">
-              基于快照调整
+            <button type="button" class="secondary-action" @click="copyText('Calldata', run.calldata)">
+              复制 Calldata
             </button>
           </div>
         </section>
 
         <section class="panel execution-panel">
-          <p class="eyebrow">Cobo V2 preview</p>
-          <h2>User Approval + Execution Record</h2>
+          <p class="eyebrow">V2 boundary</p>
+          <h2>Cobo 钱包执行</h2>
           <p class="panel-note">
-            用户批准的是拟执行方案。当前记录为 DEFERRED_FOR_MVP；V2 接入 Cobo 后可显示 pact、requestId 和链上交易 hash。
+            当前 MVP 只演示可审计链路。Cobo Wallet Executor、真实 Polymarket 买入和 Investment Plan 参数窗口属于 V2。
           </p>
           <dl>
-            <div><dt>userApproval</dt><dd>approval_1</dd></div>
             <div><dt>executionRecord</dt><dd>{{ run.executionRecord.id }}</dd></div>
             <div><dt>status</dt><dd>{{ run.executionRecord.status }}</dd></div>
             <div><dt>cobo</dt><dd class="tone-preview">V2 preview</dd></div>
