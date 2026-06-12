@@ -109,8 +109,6 @@ Decision Dossier 包含 `auditHash`。这个哈希写入 Sepolia 测试网后，
 ```text
 # GLM-5.1 Agent（必需，否则回退到缓存）
 ZAI_API_KEY=<你的 Z.AI API Key>
-ZAI_MODEL=glm-5.1                     # 默认值
-ZAI_API_BASE_URL=<可选的自定义地址>    # 默认使用 Z.AI 官方地址
 
 # Sepolia 锚点（仅 --send-anchor 需要）
 SEPOLIA_RPC_URL=<Sepolia RPC URL>
