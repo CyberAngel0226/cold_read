@@ -1,0 +1,263 @@
+{
+  "version": "coldread.long-horizon-agent-run.v1",
+  "engine": "GLM-5.1",
+  "mode": "cached_replay",
+  "createdAt": "2026-06-12T18:49:49.343Z",
+  "market": "new-rhianna-album-before-gta-vi-926",
+  "marketEvidence": {
+    "id": "540817",
+    "conditionId": "0x1fad72fae204143ff1c3035e99e7c0f65ea8d5cd9bd1070987bd1a3316f772be",
+    "slug": "new-rhianna-album-before-gta-vi-926",
+    "question": "New Rihanna Album before GTA VI?",
+    "outcomes": [
+      "YES",
+      "NO"
+    ],
+    "prices": {
+      "YES": 0.51,
+      "NO": 0.49
+    },
+    "status": "active",
+    "volume": 825104.0995600048,
+    "liquidity": 21850.0387,
+    "closeTime": "2026-07-31T12:00:00Z",
+    "resolutionRules": "Resolves YES if Rihanna officially releases a new album before GTA VI is officially released in the US.",
+    "source": "polymarket",
+    "sourceUrl": "https://polymarket.com/event/new-rhianna-album-before-gta-vi-926",
+    "raw": {
+      "cachedReplay": true
+    }
+  },
+  "steps": [
+    {
+      "id": "step-1",
+      "index": 1,
+      "title": "任务拆解 / Plan task",
+      "titleZh": "任务拆解",
+      "titleEn": "Plan task",
+      "status": "completed",
+      "modelAction": {
+        "summary": "Select plan_task as the next bounded ColdRead tool.",
+        "nextTool": "plan_task"
+      },
+      "toolCall": {
+        "name": "plan_task",
+        "input": {
+          "market": "new-rhianna-album-before-gta-vi-926"
+        }
+      },
+      "observation": "GLM-5.1 制定 6 步审计计划。"
+    },
+    {
+      "id": "step-2",
+      "index": 2,
+      "title": "读取真实盘口 / Fetch live market",
+      "titleZh": "读取真实盘口",
+      "titleEn": "Fetch live market",
+      "status": "completed",
+      "modelAction": {
+        "summary": "Select fetch_polymarket_market as the next bounded ColdRead tool.",
+        "nextTool": "fetch_polymarket_market"
+      },
+      "toolCall": {
+        "name": "fetch_polymarket_market",
+        "input": {
+          "market": "new-rhianna-album-before-gta-vi-926"
+        }
+      },
+      "observation": "找到真实 Polymarket 市场并保留来源链接。"
+    },
+    {
+      "id": "step-3",
+      "index": 3,
+      "title": "生成轨迹草稿 / Draft trace",
+      "titleZh": "生成轨迹草稿",
+      "titleEn": "Draft trace",
+      "status": "completed",
+      "modelAction": {
+        "summary": "Select draft_agent_trace as the next bounded ColdRead tool.",
+        "nextTool": "draft_agent_trace"
+      },
+      "toolCall": {
+        "name": "draft_agent_trace",
+        "input": {
+          "market": "new-rhianna-album-before-gta-vi-926"
+        }
+      },
+      "observation": "GLM-5.1 生成第一版 Agent Run Trace。"
+    },
+    {
+      "id": "step-4",
+      "index": 4,
+      "title": "轨迹校验失败 / Trace validation failed",
+      "titleZh": "轨迹校验失败",
+      "titleEn": "Trace validation failed",
+      "status": "failed",
+      "modelAction": {
+        "summary": "Select validate_agent_trace as the next bounded ColdRead tool.",
+        "nextTool": "validate_agent_trace"
+      },
+      "toolCall": {
+        "name": "validate_agent_trace",
+        "input": {
+          "requiredField": "externalRiskFlags"
+        }
+      },
+      "observation": "trace 缺少 externalRiskFlags，工具拒绝进入审计载荷。"
+    },
+    {
+      "id": "step-5",
+      "index": 5,
+      "title": "自我修复 / Self repair",
+      "titleZh": "自我修复",
+      "titleEn": "Self repair",
+      "status": "completed",
+      "modelAction": {
+        "summary": "Select repair_agent_trace as the next bounded ColdRead tool.",
+        "nextTool": "repair_agent_trace"
+      },
+      "toolCall": {
+        "name": "repair_agent_trace",
+        "input": {
+          "repair": "externalRiskFlags"
+        }
+      },
+      "observation": "GLM-5.1 补齐风险字段，并将建议降级为 HOLD。",
+      "repairOfStepId": "step-4"
+    },
+    {
+      "id": "step-6",
+      "index": 6,
+      "title": "计算哈希并准备锚点 / Compute hash and prepare anchor",
+      "titleZh": "计算哈希并准备锚点",
+      "titleEn": "Compute hash and prepare anchor",
+      "status": "completed",
+      "modelAction": {
+        "summary": "Select prepare_sepolia_anchor as the next bounded ColdRead tool.",
+        "nextTool": "prepare_sepolia_anchor"
+      },
+      "toolCall": {
+        "name": "prepare_sepolia_anchor",
+        "input": {
+          "traceHash": "22b9e22267900b9065601bf78da64c7dbad34d5c4a7b1d7a116de60a65b16e3b"
+        }
+      },
+      "observation": "已计算 trace hash 并准备 Sepolia calldata anchor。"
+    }
+  ],
+  "finalTrace": {
+    "engine": "GLM-5.1",
+    "generatedAt": "2026-06-12T18:49:49.343Z",
+    "task": {
+      "targetMarketId": "new-rhianna-album-before-gta-vi-926",
+      "objective": "Analyze a live Polymarket market and draft an auditable lens decision."
+    },
+    "steps": [
+      {
+        "id": "step-1",
+        "title": "Normalize live market evidence",
+        "phase": "observe_market",
+        "observation": "The agent loads a live Polymarket market, records the question, outcomes, prices, status, volume, liquidity, and resolution text.",
+        "evidenceRefs": [
+          "market.question",
+          "market.outcomes",
+          "market.prices",
+          "market.resolutionRules"
+        ]
+      },
+      {
+        "id": "step-2",
+        "title": "Estimate market structure",
+        "phase": "observe_market",
+        "observation": "YES is expensive relative to NO, so the market already prices in a strong consensus.",
+        "evidenceRefs": [
+          "market.prices.YES",
+          "market.prices.NO",
+          "market.liquidity"
+        ],
+        "riskChecks": [
+          "Avoid paying a high consensus price without an independent catalyst."
+        ]
+      },
+      {
+        "id": "step-3",
+        "title": "Search for missing context",
+        "phase": "observe_context",
+        "observation": "The trace marks that live external news confirmation is required before any buy recommendation can become executable.",
+        "evidenceRefs": [
+          "market.sourceUrl",
+          "market.resolutionRules"
+        ],
+        "riskChecks": [
+          "Do not infer the real-world event state from prediction market price alone."
+        ]
+      },
+      {
+        "id": "step-4",
+        "title": "Run veto checks",
+        "phase": "veto_check",
+        "observation": "The agent refuses execution because source diversity is still incomplete for a real-money order.",
+        "evidenceRefs": [
+          "market.sourceApiUrl"
+        ],
+        "riskChecks": [
+          "Block wallet execution until independent confirmation is attached."
+        ]
+      },
+      {
+        "id": "step-5",
+        "title": "Self-correct draft action",
+        "phase": "self_correction",
+        "observation": "The initial buy-leaning draft is corrected to HOLD because the evidence chain is not strong enough for autonomous execution.",
+        "evidenceRefs": [
+          "market.prices.YES",
+          "market.resolutionRules"
+        ],
+        "selfCorrections": [
+          "Downgrade BUY_YES_SMALL to HOLD when the only strong signal is market price."
+        ]
+      },
+      {
+        "id": "step-6",
+        "title": "Prepare audit material",
+        "phase": "audit_prepare",
+        "observation": "The trace keeps every decision claim tied to evidence references so the final dossier can be anchored later.",
+        "evidenceRefs": [
+          "trace.steps",
+          "trace.finalLensDraft"
+        ],
+        "riskChecks": [
+          "Require user approval before wallet execution."
+        ]
+      }
+    ],
+    "finalLensDraft": {
+      "action": "HOLD",
+      "targetMarketId": "new-rhianna-album-before-gta-vi-926",
+      "confidence": 0.62,
+      "riskLevel": "medium",
+      "rationale": "The market is live and analyzable, but ColdRead should not execute from market price alone. The auditable recommendation is HOLD until external confirmation is attached.",
+      "evidenceRefs": [
+        "market.prices.YES",
+        "market.prices.NO",
+        "market.resolutionRules",
+        "trace.steps.step-5"
+      ],
+      "externalRiskFlags": [
+        "Needs external news confirmation before buy.",
+        "Wallet execution requires explicit user approval.",
+        "Audit anchor should record the final dossier before any production run."
+      ]
+    }
+  },
+  "traceHash": "22b9e22267900b9065601bf78da64c7dbad34d5c4a7b1d7a116de60a65b16e3b",
+  "anchor": {
+    "status": "DRY_RUN",
+    "network": "sepolia",
+    "hash": "22b9e22267900b9065601bf78da64c7dbad34d5c4a7b1d7a116de60a65b16e3b",
+    "to": "0xED3802DDD5E1a700FD2071F32a2c6f5ea9415a51",
+    "calldata": "0x22b9e22267900b9065601bf78da64c7dbad34d5c4a7b1d7a116de60a65b16e3b",
+    "valueEth": "0",
+    "explorerLink": "https://sepolia.etherscan.io/tx/<pending>"
+  }
+}
