@@ -89,6 +89,7 @@ The Hackathon live proof path is planned around:
 npm run demo:live -- --market <polymarket-market-slug-or-id>
 npm run demo:trace -- --market <polymarket-market-slug-or-id>
 npm run demo:anchor -- --hash <sha256-dossier-or-trace-hash>
+npm run demo:agent -- --market <polymarket-market-slug-or-id> --pretty
 ```
 
 `demo:live` reads real Polymarket market evidence and prints the normalized evidence packet with source identifiers preserved.
@@ -104,6 +105,23 @@ npm run demo:anchor -- --hash <sha256-dossier-or-trace-hash> --send
 ```
 
 If `--hash` is omitted, `demo:anchor` uses the committed demo dossier anchor hash derived from the cached GLM-5.1 Agent Run Trace.
+
+Add `--pretty` for a bilingual Chinese / English presentation view. The default output stays JSON for scripts:
+
+```bash
+npm run demo:anchor -- --pretty
+npm run demo:anchor -- --send --pretty
+```
+
+`demo:agent` is the Z.AI long-horizon proof path. It asks GLM-5.1 to drive a bounded Web3 audit workflow: plan the task, call ColdRead tools, observe results, validate the Agent Run Trace, repair a failed validation once, compute a trace hash, and prepare a Sepolia Audit Anchor. It writes `demo/agent-run-record.latest.json` at runtime and the repo includes `demo/agent-run-record.cached.json` as reproducible Hackathon evidence.
+
+```bash
+npm run demo:agent -- --market <polymarket-market-slug-or-id> --pretty
+npm run demo:agent -- --market <polymarket-market-slug-or-id> --require-live --pretty
+npm run demo:agent -- --market <polymarket-market-slug-or-id> --send-anchor --pretty
+```
+
+When `ZAI_API_KEY` is configured, `demo:agent` attempts a live GLM-5.1 planner call. Without a key, or if the live call fails, it falls back to an explicitly labeled cached replay unless `--require-live` is set. `--send-anchor` is the only mode that sends a real Sepolia transaction.
 
 ## Environment Variables
 
