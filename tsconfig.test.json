@@ -4,5 +4,5 @@
     "noEmit": false,
     "outDir": ".tmp/test-build"
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"]
+  "include": ["src/**/*.ts", "app/api/**/*.ts", "app/data/**/*.ts", "tests/**/*.ts"]
 }

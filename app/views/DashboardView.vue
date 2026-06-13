@@ -1,13 +1,11 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import {
-  Activity,
-  Bell,
-  Bot,
   ExternalLink,
   Gauge,
   Plus,
   ShieldCheck,
 } from "@lucide/vue";
+import { computed, ref } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import {
   monitoredMarkets,
@@ -15,7 +13,6 @@ import {
   systemStatuses,
   type DecisionRunCard,
 } from "../data/mockData.js";
-import { computed, ref } from "vue";
 import {
   loadDecisionRunCards,
   submitDecisionTopic,
@@ -23,15 +20,15 @@ import {
 
 const toast = ref("");
 const router = useRouter();
-const topicText = ref("Fed rate cut");
+const topicText = ref("New Rihanna Album before GTA VI?");
 const isSubmitting = ref(false);
 const submittedRunCards = ref(loadDecisionRunCards());
 const runCards = computed(() => submittedRunCards.value);
 
 const metricCards = [
-  { value: "18", label: "今日获取盘口", tone: "chain" },
-  { value: "3", label: "候选通过", tone: "preview" },
-  { value: "1", label: "审计锚定", tone: "anchor" },
+  { value: "6", label: "GLM 长程步骤", tone: "chain" },
+  { value: "1", label: "校验失败后修复", tone: "preview" },
+  { value: "1", label: "Sepolia 锚点准备", tone: "anchor" },
   { value: "0", label: "真实交易", tone: "muted" },
 ] as const;
 
@@ -47,6 +44,7 @@ function previewNotice(message: string): void {
 function chipClass(run: DecisionRunCard, chip: string): string {
   if (chip === "VETO") return "chip chip-danger";
   if (chip === "ANCHOR") return "chip chip-anchor";
+  if (chip === "HOLD") return "chip chip-medium";
   if (run.riskLevel === "LOW" && chip === "LOW") return "chip chip-low";
   if (run.riskLevel === "MEDIUM" && chip === "MEDIUM") return "chip chip-medium";
   return "chip";
@@ -81,9 +79,9 @@ async function runDecisionTopic(): Promise<void> {
       </RouterLink>
       <nav class="top-nav" aria-label="Primary navigation">
         <a class="active">首页</a>
-        <a>Decision Runs</a>
-        <a>策略参数</a>
-        <a>审计</a>
+        <a>GLM Agent</a>
+        <a>审计证据</a>
+        <a>V2 钱包</a>
       </nav>
       <button class="primary-action" type="button" :disabled="isSubmitting" @click="runDecisionTopic">
         <Plus :size="16" />
@@ -100,11 +98,10 @@ async function runDecisionTopic(): Promise<void> {
         <section class="panel system-panel" aria-labelledby="system-status-title">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">System Health</p>
-              <h2 id="system-status-title">系统级状态</h2>
+              <p class="eyebrow">Hackathon proof path</p>
+              <h2 id="system-status-title">GLM-5.1 长程审计状态</h2>
             </div>
             <ShieldCheck :size="20" class="muted-icon" />
-            
           </div>
           <div class="system-status-grid">
             <button
@@ -113,7 +110,7 @@ async function runDecisionTopic(): Promise<void> {
               class="system-card"
               type="button"
               @click="status.name === 'Cobo'
-                ? previewNotice('Cobo 执行是 V2 预览，当前不会真实操作钱包。')
+                ? previewNotice('Cobo 钱包执行是 V2，当前 MVP 只展示可审计链路。')
                 : undefined"
             >
               <span class="caption">{{ status.name }}</span>
@@ -127,10 +124,10 @@ async function runDecisionTopic(): Promise<void> {
 
         <section class="panel current-run">
           <div class="current-run-copy">
-            <p class="eyebrow">当前 Decision Run</p>
-            <h1>美联储会在 7 月降息吗？</h1>
+            <p class="eyebrow">当前 Demo Run</p>
+            <h1>New Rihanna Album before GTA VI?</h1>
             <p>
-              正在运行 External Risk Lens。下一步将选择 Final Decision；本次运行不会自动触发钱包执行。
+              GLM-5.1 正在作为长程 Agent：拆解任务、读取真实 Polymarket 盘口、校验轨迹、完成自我修复，并准备 Sepolia 审计锚点。
             </p>
           </div>
           <form class="topic-form" @submit.prevent="runDecisionTopic">
@@ -140,25 +137,25 @@ async function runDecisionTopic(): Promise<void> {
                 id="topic-input-main"
                 v-model="topicText"
                 type="text"
-                placeholder="例如：Fed rate cut"
+                placeholder="例如：New Rihanna Album before GTA VI?"
                 :disabled="isSubmitting"
               />
               <button class="primary-action" type="submit" :disabled="isSubmitting">
                 {{ isSubmitting ? "运行中..." : "运行" }}
               </button>
             </div>
-            <small>输入 “no screened market” 可验证 Screening Outcome（筛选结果）路径。</small>
+            <small>CLI 主演示命令：npm run demo:agent -- --market ... --require-live --pretty</small>
           </form>
           <div class="stage-strip" aria-label="Current Decision Run stage">
             <div
-              v-for="(stage, index) in ['收到主题', '获取盘口', '筛选与确认', '冻结证据', 'Agent 建议', '最终决策', '审计锚定', '确认与执行']"
+              v-for="(stage, index) in ['任务拆解', '读取盘口', '轨迹草稿', '校验失败', '自我修复', '锚点准备']"
               :key="stage"
               class="stage-row"
             >
               <span
                 :class="[
                   'stage-bar',
-                  index < 4 ? 'complete' : index === 4 ? 'active' : '',
+                  index < 5 ? 'complete' : index === 5 ? 'active' : '',
                 ]"
               />
               <span>{{ stage }}</span>
@@ -177,9 +174,9 @@ async function runDecisionTopic(): Promise<void> {
           <div class="section-heading">
             <div>
               <p class="eyebrow">Decision Run cards</p>
-              <h2>最近 Decision Run</h2>
+              <h2>最近审计运行</h2>
             </div>
-            <p class="subtle">卡片流 · 非事件日志</p>
+            <p class="subtle">GLM trace · Sepolia anchor</p>
           </div>
           <RouterLink
             v-for="run in runCards"
@@ -189,7 +186,7 @@ async function runDecisionTopic(): Promise<void> {
           >
             <div class="run-card-main">
               <strong>{{ run.id }} · {{ run.topic }}</strong>
-              <span>{{ run.stage }} · 策略: {{ run.strategyName }} · Amoy preview</span>
+              <span>{{ run.stage }} · 策略: {{ run.strategyName }}</span>
             </div>
             <span :class="chipClass(run, run.finalAction)">{{ run.finalAction }}</span>
             <span :class="chipClass(run, run.riskLevel)">{{ run.riskLevel }}</span>
@@ -207,15 +204,15 @@ async function runDecisionTopic(): Promise<void> {
         <section class="panel watch-panel">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">V2 surface</p>
-              <h2>监控盘口</h2>
+              <p class="eyebrow">Market material</p>
+              <h2>演示盘口</h2>
             </div>
             <button
               class="preview-badge"
               type="button"
-              @click="previewNotice('监控盘口是 V2 预览，当前数据为演示，不会启动后台 watchlist。')"
+              @click="previewNotice('当前不会自动扫市场；--market slug 仍由演示者指定。')"
             >
-              V2 Preview
+              Manual Slug
             </button>
           </div>
           <button
@@ -223,7 +220,7 @@ async function runDecisionTopic(): Promise<void> {
             :key="market.question"
             class="market-row"
             type="button"
-            @click="previewNotice('监控盘口是 V2 预览，当前不会触发后台任务。')"
+            @click="previewNotice('监控盘口是 V2，当前只展示演示材料。')"
           >
             <span>{{ market.question }}</span>
             <small>{{ market.price }} · {{ market.status }}</small>
@@ -233,12 +230,12 @@ async function runDecisionTopic(): Promise<void> {
         <section class="panel strategy-panel">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">Global defaults</p>
-              <h2>Strategy Parameters</h2>
+              <p class="eyebrow">Audit boundary</p>
+              <h2>策略参数快照</h2>
             </div>
             <Gauge :size="20" class="muted-icon" />
           </div>
-          <p class="panel-note">全局默认策略。保存后只影响未来运行，不会自动重跑 Agent。</p>
+          <p class="panel-note">MVP 展示可审计推理，不执行真实交易。参数调整和 Cobo 执行进入 V2。</p>
 
           <div class="parameter-group">
             <h3>Risk Limits</h3>

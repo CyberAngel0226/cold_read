@@ -1,8 +1,8 @@
 import type {
   AgentRecommendation,
-  BuyFinalDecision,
   DecisionDossier,
   ExecutionRecord,
+  FinalDecision,
   PipelineResult,
   RecommendationAction,
   RiskLevel,
@@ -146,7 +146,7 @@ function mapDossierToDetail(dossier: DecisionDossier): DecisionRunDetail {
     topic: dossier.topic.text,
     finalDecision,
     riskLevel: deriveRiskLevel(dossier.agentRecommendations),
-    auditStatus: firstAnchor === undefined ? "ANCHOR VERIFIED" : "ANCHOR VERIFIED",
+  auditStatus: firstAnchor === undefined ? "SEPOLIA READY" : "ANCHOR VERIFIED",
     executionRecord,
     stages: mapTimeline(dossier),
     evidenceReviews: dossier.agentRecommendations.map(mapRecommendationToEvidenceReview),
@@ -160,6 +160,10 @@ function mapDossierToDetail(dossier: DecisionDossier): DecisionRunDetail {
         href: "https://polygonscan.com/",
       },
     ],
+    agentRunTrace: [],
+    traceHash: firstAnchor?.contentHash ?? "pending",
+    calldata: firstAnchor === undefined ? "pending" : `0x${firstAnchor.contentHash}`,
+    explorerLink: "https://sepolia.etherscan.io/tx/<pending>",
     strategyParameters,
   };
 }
@@ -257,13 +261,13 @@ function deriveRiskLevel(recommendations: readonly AgentRecommendation[]): RiskL
 
 function isBuyFinalDecision(
   finalDecision: DecisionDossier["finalDecision"],
-): finalDecision is BuyFinalDecision {
+): finalDecision is Extract<FinalDecision, { action: "BUY_YES_SMALL" | "BUY_NO_SMALL" }> {
   return finalDecision.action === "BUY_YES_SMALL" || finalDecision.action === "BUY_NO_SMALL";
 }
 
 function createDeferredExecutionRecord(
   dossier: DecisionDossier,
-  finalDecision: BuyFinalDecision,
+  finalDecision: Extract<FinalDecision, { action: "BUY_YES_SMALL" | "BUY_NO_SMALL" }>,
 ): ExecutionRecord {
   return {
     id: `execution_${dossier.decisionRun.id}`,
