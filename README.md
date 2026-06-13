@@ -155,6 +155,8 @@ SEPOLIA_ANCHOR_TO=<address that receives the 0 ETH calldata transaction>
 
 ## 演示叙事
 
+面向评委的 3-5 分钟展示脚本见 [docs/demo-script.md](docs/demo-script.md)。它包含推荐展示顺序、CLI 命令、Sepolia 审计锚点说明、Dashboard 讲法和常见评委问题。
+
 1. 介绍 ColdRead：它是 AI x Web3 Verifiable Audit Trail（可验证审计链路），不是交易机器人。
 2. 在 Vue Dashboard 中提交或打开一个 Decision Topic。
 3. 讲 Decision Timeline：市场读取、盘口筛选、证据冻结、GLM-5.1 Agent Run Trace、建议、最终决策、审计锚点和执行记录。
@@ -169,6 +171,7 @@ SEPOLIA_ANCHOR_TO=<address that receives the 0 ETH calldata transaction>
 - [docs/adr](docs/adr)：架构决策记录。
 - [docs/github-workflow.md](docs/github-workflow.md)：分支、提交、推送和 PR 规则。
 - [docs/user-manual.md](docs/user-manual.md)：用户手册。
+- [docs/demo-script.md](docs/demo-script.md)：面向评委的演示脚本。
 - [app](app)：Vue Dashboard 前端。
 - [src](src)：TypeScript 领域、管线、审计和 API 模块。
 - [tests](tests)：TypeScript 和 Python 集成测试。
